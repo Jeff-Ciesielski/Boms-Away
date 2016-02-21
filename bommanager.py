@@ -25,6 +25,7 @@ SidePanel_AppMenu = {'Load Schematic': ['on_load', None],
                      'Component Types': ['on_type', None],
                      'Export BOM as CSV': ['on_export_csv', None],
                      'Quit': ['on_quit', None],
+                     'Consolidate Like Components': ['on_consolidate', None],
                      }
 id_AppMenu_METHOD = 0
 id_AppMenu_PANEL = 1
@@ -111,6 +112,10 @@ class ComponentWrapper(object):
     def value(self):
         return self._get_field_value(1)
 
+    @value.setter
+    def value(self, val):
+        self._set_field_value(1, val)
+
     @property
     def footprint(self):
         return self._get_field_value(2)
@@ -158,7 +163,7 @@ class ComponentWrapper(object):
             '\nComponent: {}'.format(self.reference),
             '-' * 20,
             'Value: {}'.format(self.value),
-            'Footprint: {}'.format(self.footprint),            
+            'Footprint: {}'.format(self.footprint),
         ])
 
 class ComponentTypeContainer(object):
@@ -187,6 +192,11 @@ class ComponentTypeContainer(object):
     def value(self):
         return self._components[0].value
 
+    @value.setter
+    def value(self, val):
+        for c in self._components:
+            c.value = val
+
     @property
     def footprint(self):
         return self._components[0].footprint
@@ -207,6 +217,13 @@ class ComponentTypeContainer(object):
     def supplier_pn(self):
         return self._components[0].supplier_pn
 
+    def __str__(self):
+        return '\n'.join([
+            '\nComponent Type Container',
+            '-' * 20,
+            'Value: {}'.format(self.value),
+            'Footprint: {}'.format(self.footprint),
+        ])
 
 class ComponentView(BoxLayout):
     top_box = ObjectProperty(None)
@@ -322,17 +339,33 @@ class BomManagerApp(App):
 
     def _reset(self):
         self.schematics = {}
-        self.component_data = []
-        self.component_type_data = []
         self.component_map = {}
         self.component_type_map = {}
+
+    def _update_data(self):
+
+        type_data = []
+        component_data = []
+
+        for ctname, ct in self.component_type_map.items():
+            type_data.append('{} | {}'.format(ct.value, ct.footprint))
+
+        for cname, c in self.component_map.items():
+            component_data.append('{} | {} | {}'.format(c.reference,
+                                                        c.value,
+                                                        c.footprint))
+
+        # Sort and attach data
+        self.comp_view.attach_data(sorted(component_data))
+        self.type_view.attach_data(sorted(type_data))
 
     def load(self, path, filename):
         self.dismiss_popup()
 
-        # Enable the save button if we have a live schematic
+        # Enable buttons if we have a live schematic
         self.side_panel.save_button.disabled = False
         self.side_panel.export_button.disabled = False
+        self.side_panel.consolidate_button.disabled = False
 
         # remove old schematic information
         self._reset()
@@ -350,8 +383,6 @@ class BomManagerApp(App):
         # Recursively walks sheets to locate nested subschematics
         self._walk_sheets(base_dir, self.schematics[top_name].sheets)
 
-        component_data = []
-        type_data = []
         for name, schematic in self.schematics.items():
             for _cbase in schematic.components:
                 c = ComponentWrapper(_cbase)
@@ -369,21 +400,28 @@ class BomManagerApp(App):
                     self.component_type_map[comp_type_key] = ComponentTypeContainer()
                 self.component_type_map[comp_type_key].add(c)
 
-                component_data.append('{} | {} | {}'.format(c.reference,
-                                                            c.value,
-                                                            c.footprint))
-                type_data.append('{} | {}'.format(c.value, c.footprint))
-
-        # Uniquify and sort data
-        self.component_type_data = sorted(list(set(type_data)))
-        self.component_data = sorted(list(set(component_data)))
-
         self.comp_view.attach_selection_callback(self.print_selected_component)
-        self.comp_view.attach_data(self.component_data)
-
         self.type_view.attach_selection_callback(self.print_component_type)
-        self.type_view.attach_data(self.component_type_data)
 
+        self._update_data()
+
+    def _consolidate(self):
+        """
+        Performs consolidation
+        """
+        uniq = {}
+
+        ctmap_keys = self.component_type_map.keys()
+
+        for ct in ctmap_keys:
+            cthsh = ct.upper().replace(' ','')
+
+            if cthsh in uniq:
+                print "Duplicated part!"
+                print uniq[cthsh]
+                print self.component_type_map[ct]
+
+            uniq[cthsh] = self.component_type_map[ct]
 
     def build(self):
         global AppRoot
@@ -451,6 +489,12 @@ class BomManagerApp(App):
         Exports Bill of Materials as a CSV File
         """
         self.show_export()
+
+    def on_consolidate(self):
+        """
+        Consolidates components (i.e. 1K 0603 and 1k 0603 become same component group -> 1K 0603 x 2)
+        """
+        self._consolidate()
 
     def _switch_main_page(self, panel):
         self.navdrawer.close_sidepanel()
