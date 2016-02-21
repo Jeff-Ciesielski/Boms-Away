@@ -94,7 +94,6 @@ class ComponentView(BoxLayout):
     def attach_selection_callback(self, cb):
         self.comp_list.component_view.adapter.bind(on_selection_change=cb)
 
-
 class ComponentTypeView(BoxLayout):
     top_box = ObjectProperty(None)
     scrollbox = ObjectProperty(None)
@@ -168,6 +167,9 @@ class BomManagerApp(App):
 
     def load(self, path, filename):
         self.dismiss_popup()
+
+        # Enable the save button if we have a live schematic
+        self.side_panel.save_button.disabled = False
 
         # remove old schematic information
         self._reset()
@@ -259,7 +261,6 @@ class BomManagerApp(App):
         """
         self.navdrawer.close_sidepanel()
         self.show_load()
-        self.side_panel.save_button.disabled = False
 
     def on_component(self):
         """
