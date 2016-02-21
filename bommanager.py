@@ -14,6 +14,10 @@ from kivy.uix.button import Button
 from kivy.adapters.listadapter import ListAdapter
 from kivy.garden.NavigationDrawer import NavigationDrawer
 from kivy.core.window import Window
+import csv
+
+# TODO: Normalize all input schematic components to follow field
+# guidelines
 
 SidePanel_AppMenu = {'Load Schematic': ['on_load', None],
                      'Save Schematic': ['on_save', None],
@@ -66,6 +70,10 @@ class LoadDialog(FloatLayout):
     cancel = ObjectProperty(None)
 
 
+class ExportDialog(FloatLayout):
+    export = ObjectProperty(None)
+    cancel = ObjectProperty(None)
+
 # TODO: Attempt to fold selectablelist/componentview/componenttypeview
 # into one base class, then subclass for the editor views
 class SelectableList(BoxLayout):
@@ -73,6 +81,131 @@ class SelectableList(BoxLayout):
 
     def __init__(self, **kwargs):
         super(SelectableList, self).__init__(**kwargs)
+
+
+# TODO: Enumerate field values
+class ComponentWrapper(object):
+    def __init__(self, base_component):
+        self._cmp = base_component
+
+    def _get_field(self, field_no):
+        return (
+            [x for x in self._cmp.fields if x['id'] == str(field_no)][0]
+        )
+
+    def _set_field_value(self, field_no, value):
+        f = self._get_field(field_no)
+        f['ref'] = '"{}"'.format(value)
+
+    def _get_field_value(self, field_no):
+        try:
+            return self._get_field(field_no)['ref'].strip('"')
+        except:
+            return ''
+
+    @property
+    def reference(self):
+        return self._get_field_value(0)
+
+    @property
+    def value(self):
+        return self._get_field_value(1)
+
+    @property
+    def footprint(self):
+        return self._get_field_value(2)
+
+    @property
+    def is_virtual(self):
+        if self._cmp.labels['ref'][0] == '#':
+            return True
+        return False
+
+    @property
+    def manufacturer(self):
+        return self._get_field_value(7)
+
+    @manufacturer.setter
+    def manufacturer(self, mfr):
+        self._set_field_value(7, mfr)
+
+    @property
+    def supplier(self):
+        return self._get_field_value(6)
+
+    @supplier.setter
+    def supplier(self, sup):
+        self._set_field_value(6, sup)
+
+    @property
+    def manufacturer_pn(self):
+        return self._get_field_value(5)
+
+    @manufacturer_pn.setter
+    def manufacturer_pn(self, pn):
+        self._set_field_value(5, pn)
+
+    @property
+    def supplier_pn(self):
+        return self._get_field_value(4)
+
+    @supplier_pn.setter
+    def supplier_pn(self, pn):
+        self._set_field_value(4, pn)
+
+    def __str__(self):
+        return '\n'.join([
+            '\nComponent: {}'.format(self.reference),
+            '-' * 20,
+            'Value: {}'.format(self.value),
+            'Footprint: {}'.format(self.footprint),            
+        ])
+
+class ComponentTypeContainer(object):
+    def __init__(self):
+        self._components = []
+
+    def add(self, component):
+        # Only allow insertion of like components
+        if len(self._components):
+            if ((component.value != self._components[0].value) or
+                (component.footprint != self._components[0].footprint)):
+                raise Exception("Attempted to insert unlike component into ComponentTypeContainer")
+
+        self._components.append(component)
+
+    def __len__(self):
+        return len(self._components)
+
+    # TODO: Add validation function and enforce!
+
+    @property
+    def refs(self):
+        return ';'.join([x.reference for x in self._components])
+
+    @property
+    def value(self):
+        return self._components[0].value
+
+    @property
+    def footprint(self):
+        return self._components[0].footprint
+
+    @property
+    def manufacturer(self):
+        return self._components[0].manufacturer
+
+    @property
+    def manufacturer_pn(self):
+        return self._components[0].manufacturer_pn
+
+    @property
+    def supplier(self):
+        return self._components[0].supplier
+
+    @property
+    def supplier_pn(self):
+        return self._components[0].supplier_pn
 
 
 class ComponentView(BoxLayout):
@@ -148,6 +281,35 @@ class BomManagerApp(App):
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
+    def show_export(self):
+        content = ExportDialog(export=self.export_csv, cancel=self.dismiss_popup)
+        self._popup = Popup(title="Export BOM CSV", content=content,
+                            size_hint=(0.9, 0.9))
+        self._popup.open()
+
+    def export_csv(self, path, filename):
+
+        # TODO: Check if file exists and ask about overwrite
+        with open(os.path.join(path, filename), 'w') as csvfile:
+            wrt = csv.writer(csvfile)
+
+            wrt.writerow(['Refs', 'Value', 'Footprint', 'QTY', 'MFR', 'MPN', 'SPR', 'SPN'])
+
+            for ctype in sorted(self.component_type_map):
+                ctcont = self.component_type_map[ctype]
+                wrt.writerow([
+                    ctcont.refs,
+                    ctcont.value,
+                    ctcont.footprint,
+                    len(ctcont),
+                    ctcont.manufacturer,
+                    ctcont.manufacturer_pn,
+                    ctcont.supplier,
+                    ctcont.supplier_pn,
+                ])
+
+        self.dismiss_popup()
+
     def _walk_sheets(self, base_dir, sheets):
         for sheet in sheets:
             sheet_name = sheet.fields[0]['value'].strip('"')
@@ -170,6 +332,7 @@ class BomManagerApp(App):
 
         # Enable the save button if we have a live schematic
         self.side_panel.save_button.disabled = False
+        self.side_panel.export_button.disabled = False
 
         # remove old schematic information
         self._reset()
@@ -190,30 +353,26 @@ class BomManagerApp(App):
         component_data = []
         type_data = []
         for name, schematic in self.schematics.items():
-            for c in schematic.components:
+            for _cbase in schematic.components:
+                c = ComponentWrapper(_cbase)
 
                 # Skip virtual components (power, gnd, etc)
-                if c.labels['ref'][0] == '#':
+                if c.is_virtual:
                     continue
 
-                ref = [x for x in c.fields if x['id'] == '0'][0]['ref'].strip('"')
-                val = [x for x in c.fields if x['id'] == '1'][0]['ref'].strip('"')
-                fp = ([x for x in c.fields if x['id'] == '2'][0]['ref']
-                      .strip('"')
-                      .split(':')[-1]
-                )
-
-                comp_type_key = '{}|{}'.format(val, fp)
-                comp_key = ref
+                comp_type_key = '{}|{}'.format(c.value, c.footprint)
+                comp_key = c.reference
 
                 self.component_map[comp_key] = c
 
                 if comp_type_key not in self.component_type_map:
-                    self.component_type_map[comp_type_key] = []
-                self.component_type_map[comp_type_key].append(c)
+                    self.component_type_map[comp_type_key] = ComponentTypeContainer()
+                self.component_type_map[comp_type_key].add(c)
 
-                component_data.append('{} | {} | {}'.format(ref, val, fp))
-                type_data.append('{} | {}'.format(val, fp))
+                component_data.append('{} | {} | {}'.format(c.reference,
+                                                            c.value,
+                                                            c.footprint))
+                type_data.append('{} | {}'.format(c.value, c.footprint))
 
         # Uniquify and sort data
         self.component_type_data = sorted(list(set(type_data)))
@@ -291,7 +450,7 @@ class BomManagerApp(App):
         """
         Exports Bill of Materials as a CSV File
         """
-        pass
+        self.show_export()
 
     def _switch_main_page(self, panel):
         self.navdrawer.close_sidepanel()

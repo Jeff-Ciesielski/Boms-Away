@@ -45,19 +45,38 @@
     spacing: 1
 
     save_button: save_button_id
+    export_button: export_button_id
     MenuItem:
         text: 'Load Schematic'
         size_hint: (1.0, 0.1)
 
     MenuItem:
-        id: save_button_id    
+        id: save_button_id
         text: 'Save Schematic'
         size_hint: (1.0, 0.1)
         disabled: True
 
     MenuItem:
+        id: export_button_id    
         text: 'Export BOM as CSV'
         size_hint: (1.0, 0.1)
+        disabled: True
+
+    MenuItem:
+        text: '   -   '
+        size_hint: (1.0, .05)
+        disabled: True
+
+    MenuItem:
+        id: deduplicate_button_id
+        text: 'Deduplicate Components'
+        size_hint: (1.0, 0.1)
+        disabled: True
+
+    MenuItem:
+        text: '   -   '
+        size_hint: (1.0, .05)
+        disabled: True
         
     MenuItem:
         text: 'Components'
@@ -94,3 +113,31 @@
             Button:
                 text: "Load"
                 on_release: root.load(filechooser.path, filechooser.selection)
+
+<ExportDialog>:
+    text_input: text_input
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            path: getcwd()
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 50
+            multiline: False
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Export"
+                on_release: root.export(filechooser.path, text_input.text)
