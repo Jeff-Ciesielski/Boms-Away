@@ -221,6 +221,11 @@ class ComponentTypeContainer(object):
     def datasheet(self):
         return self._components[0].datasheet
 
+    @datasheet.setter
+    def datasheet(self, ds):
+        for c in self._components:
+            c.datasheet = ds
+
     @property
     def manufacturer(self):
         return self._components[0].manufacturer
@@ -290,8 +295,6 @@ class ComponentView(BoxLayout):
     def attach_update_callback(self, cb):
         self.update_cb = cb
 
-    def get_selection(self):
-        return self.comp_list.component_view.adapter.selection[0].text
 
 
 class ComponentTypeView(BoxLayout):
@@ -317,9 +320,6 @@ class ComponentTypeView(BoxLayout):
     def attach_update_callback(self, cb):
         self.update_cb = cb
 
-    def get_selection(self):
-        return self.comp_type_list.component_view.adapter.selection[0].text
-
 
 class BomManagerApp(App):
     top_box = ObjectProperty(None)
@@ -332,21 +332,38 @@ class BomManagerApp(App):
     component_type_map = DictProperty({})
     schematics = DictProperty({})
 
-    def _get_component_by_selection(self):
-        long_key = self.comp_view.get_selection()
+    # I really hate global state, but this seems like the fastest path forward...
+    _current_component = None
+    _current_type = None
+
+    def _update_component_selection(self, adapter, *args):
+
+        long_key = adapter.selection.pop().text
+
         ref, val, fp = [x.strip() for x in long_key.split('|')]
         type_key = '{}|{}'.format(val, fp)
-        return self.component_map[ref]
 
-    def _get_component_type_by_selection(self):
-        long_key = self.type_view.get_selection()
+        # Save any changes
+        self.update_component()
+
+        self._current_component = self.component_map[ref]
+        self.load_component()
+
+    def _update_component_type_selection(self, adapter, *args):
+        long_key = adapter.selection.pop().text
         val, fp = [x.strip() for x in long_key.split('|')]
         type_key = '{}|{}'.format(val, fp)
-        return self.component_type_map[type_key]
+
+        # Save any changes
+        self.update_component_type()
+
+        self._current_type = self.component_type_map[type_key]
+        self.load_component_type()
+
+    def load_component_type(self):
 
 
-    def load_component_type(self, adapter, *args):
-        ct = self._get_component_type_by_selection()
+        ct = self._current_type
 
         self.type_view.qty_text.text = str(len(ct))
         self.type_view.refs_text.text = ct.refs
@@ -358,8 +375,9 @@ class BomManagerApp(App):
         self.type_view.sup_text.text = ct.supplier
         self.type_view.sup_pn_text.text = ct.supplier_pn
 
-    def load_component(self, adapter, *args):
-        c = self._get_component_by_selection()
+    def load_component(self):
+
+        c = self._current_component
 
         self.comp_view.ref_text.text = c.reference
         self.comp_view.val_text.text = c.value
@@ -370,12 +388,33 @@ class BomManagerApp(App):
         self.comp_view.sup_text.text = c.supplier
         self.comp_view.sup_pn_text.text = c.supplier_pn
 
+    def update_component(self, *args):
 
-    def update_component(self):
-        pass
+        if self._current_component is None:
+            return
 
-    def update_component_type(self):
-        pass
+        c = self._current_component
+
+        c.value = self.comp_view.val_text.text
+        c.datasheet = self.comp_view.ds_text.text
+        c.manufacturer = self.comp_view.mfr_text.text
+        c.manufacturer_pn = self.comp_view.mfr_pn_text.text
+        c.supplier = self.comp_view.sup_text.text
+        c.supplier_pn = self.comp_view.sup_pn_text.text
+
+    def update_component_type(self, *args):
+
+        if self._current_type is None:
+            return
+
+        ct = self._current_type
+
+        ct.value = self.type_view.val_text.text
+        ct.datasheet = self.type_view.ds_text.text
+        ct.manufacturer = self.type_view.mfr_text.text
+        ct.manufacturer_pn = self.type_view.mfr_pn_text.text
+        ct.supplier = self.type_view.sup_text.text
+        ct.supplier_pn = self.type_view.sup_pn_text.text
 
     def dismiss_popup(self):
         self._popup.dismiss()
@@ -558,6 +597,32 @@ class BomManagerApp(App):
 
             print d, cl
 
+    def _bind_focus_callbacks(self):
+        comp_textboxes = [
+            self.comp_view.val_text,
+            self.comp_view.ds_text,
+            self.comp_view.mfr_text,
+            self.comp_view.mfr_pn_text,
+            self.comp_view.sup_text,
+            self.comp_view.sup_pn_text,
+        ]
+
+        type_textboxes = [
+            self.type_view.val_text,
+            self.type_view.ds_text,
+            self.type_view.mfr_text,
+            self.type_view.mfr_pn_text,
+            self.type_view.sup_text,
+            self.type_view.sup_pn_text,
+
+        ]
+
+        for tb in comp_textboxes:
+            tb.bind(focus=self.update_component)
+
+        for tb in type_textboxes:
+            tb.bind(focus=self.update_component_type)
+
     def build(self):
         global AppRoot
         AppRoot = self
@@ -570,10 +635,13 @@ class BomManagerApp(App):
         self.comp_view = ComponentView()
         self.type_view = ComponentTypeView()
 
-        self.comp_view.attach_selection_callback(self.load_component)
+        self.comp_view.attach_selection_callback(self._update_component_selection)
         self.comp_view.attach_update_callback(self.update_component)
-        self.type_view.attach_selection_callback(self.load_component_type)
+        self.type_view.attach_selection_callback(self._update_component_type_selection)
         self.type_view.attach_update_callback(self.update_component_type)
+
+        # Bind all textbox focus changes to save component changes
+        self._bind_focus_callbacks()
 
         self.main_panel = self.type_view
 
