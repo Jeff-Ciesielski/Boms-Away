@@ -463,10 +463,6 @@ class BomManagerApp(App):
                     self.component_type_map[comp_type_key] = ComponentTypeContainer()
                 self.component_type_map[comp_type_key].add(c)
 
-        # TODO: Move these somewhere more appropriate
-        self.comp_view.attach_selection_callback(self.load_component)
-        self.type_view.attach_selection_callback(self.load_component_type)
-
         self._update_data()
 
     def _consolidate(self):
@@ -547,6 +543,9 @@ class BomManagerApp(App):
 
         self.comp_view = ComponentView()
         self.type_view = ComponentTypeView()
+
+        self.comp_view.attach_selection_callback(self.load_component)
+        self.type_view.attach_selection_callback(self.load_component_type)
 
         self.main_panel = self.type_view
 
