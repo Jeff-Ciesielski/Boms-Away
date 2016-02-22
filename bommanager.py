@@ -272,30 +272,6 @@ class ComponentTypeContainer(object):
             'Quantity: {}'.format(len(self))
         ])
 
-class ComponentView(BoxLayout):
-    top_box = ObjectProperty(None)
-    scrollbox = ObjectProperty(None)
-    comp_list = ObjectProperty(None)
-    update_cb = ObjectProperty(None)
-    data = ListProperty([])
-
-    component_map = DictProperty({})
-    component_type_map = DictProperty({})
-    schematics = DictProperty({})
-
-    def __init__(self, **kwargs):
-        super(ComponentView, self).__init__(**kwargs)
-
-    def attach_data(self, data):
-        self.comp_list.component_view.adapter.data = data
-
-    def attach_selection_callback(self, cb):
-        self.comp_list.component_view.adapter.bind(on_selection_change=cb)
-
-    def attach_update_callback(self, cb):
-        self.update_cb = cb
-
-
 
 class ComponentTypeView(BoxLayout):
     top_box = ObjectProperty(None)
@@ -373,33 +349,6 @@ class BomManagerApp(App):
         self.type_view.mfr_pn_text.text = ct.manufacturer_pn
         self.type_view.sup_text.text = ct.supplier
         self.type_view.sup_pn_text.text = ct.supplier_pn
-
-    def load_component(self):
-
-        c = self._current_component
-
-        self.comp_view.ref_text.text = c.reference
-        self.comp_view.val_text.text = c.value
-        self.comp_view.fp_text.text = c.footprint
-        self.comp_view.ds_text.text = c.datasheet
-        self.comp_view.mfr_text.text = c.manufacturer
-        self.comp_view.mfr_pn_text.text = c.manufacturer_pn
-        self.comp_view.sup_text.text = c.supplier
-        self.comp_view.sup_pn_text.text = c.supplier_pn
-
-    def update_component(self, *args):
-
-        if self._current_component is None:
-            return
-
-        c = self._current_component
-
-        c.value = self.comp_view.val_text.text
-        c.datasheet = self.comp_view.ds_text.text
-        c.manufacturer = self.comp_view.mfr_text.text
-        c.manufacturer_pn = self.comp_view.mfr_pn_text.text
-        c.supplier = self.comp_view.sup_text.text
-        c.supplier_pn = self.comp_view.sup_pn_text.text
 
     def update_component_type(self, *args):
 
@@ -483,11 +432,13 @@ class BomManagerApp(App):
                                                         c.footprint))
 
         # Sort and attach data
-        self.comp_view.attach_data(sorted(component_data))
         self.type_view.attach_data(sorted(type_data))
 
     def load(self, path, filename):
         self.dismiss_popup()
+
+        if len(path) == 0 or len(filename) == 0:
+            return
 
         # Enable buttons if we have a live schematic
         self.side_panel.save_button.disabled = False
@@ -593,15 +544,6 @@ class BomManagerApp(App):
             _popup.open()
 
     def _bind_focus_callbacks(self):
-        comp_textboxes = [
-            self.comp_view.val_text,
-            self.comp_view.ds_text,
-            self.comp_view.mfr_text,
-            self.comp_view.mfr_pn_text,
-            self.comp_view.sup_text,
-            self.comp_view.sup_pn_text,
-        ]
-
         type_textboxes = [
             self.type_view.val_text,
             self.type_view.ds_text,
@@ -611,9 +553,6 @@ class BomManagerApp(App):
             self.type_view.sup_pn_text,
 
         ]
-
-        for tb in comp_textboxes:
-            tb.bind(focus=self.update_component)
 
         for tb in type_textboxes:
             tb.bind(focus=self.update_component_type)
@@ -627,11 +566,8 @@ class BomManagerApp(App):
         self.side_panel = SidePanel()
         self.navdrawer.add_widget(self.side_panel)
 
-        self.comp_view = ComponentView()
         self.type_view = ComponentTypeView()
 
-        self.comp_view.attach_selection_callback(self._update_component_selection)
-        self.comp_view.attach_update_callback(self.update_component)
         self.type_view.attach_selection_callback(self._update_component_type_selection)
         self.type_view.attach_update_callback(self.update_component_type)
 
@@ -661,12 +597,6 @@ class BomManagerApp(App):
         """
         self.navdrawer.close_sidepanel()
         self.show_load()
-
-    def on_component(self):
-        """
-        Switches to component (individual) view
-        """
-        self._switch_main_page(self.comp_view)
 
     def on_save(self):
         """

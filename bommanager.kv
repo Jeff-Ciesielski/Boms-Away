@@ -18,82 +18,6 @@
                 allow_empty_selection=True,
                 cls=ListItemButton)
 
-<ComponentView>:
-    top_box: top_box
-    comp_list: comp_list
-    ref_text: ref_text_id
-    val_text: val_text_id
-    fp_text: fp_text_id
-    ds_text: ds_text_id
-    mfr_text: mfr_text_id
-    mfr_pn_text: mfr_pn_text_id
-    sup_text: sup_text_id
-    sup_pn_text: sup_pn_text_id
-    BoxLayout:
-        orientation: 'horizontal'
-        BoxLayout:
-            orientation: 'vertical'
-            spacing: 10
-            id: top_box
-            SelectableList:
-                id: comp_list
-        BoxLayout:
-            size_hint: (.382, 1.0)
-            orientation: 'vertical'
-            spacing: 1
-            Label:
-                text: 'Reference'
-            TextInput:
-                id: ref_text_id
-                text: ''
-                multiline: False
-                disabled: True
-            Label:
-                text: 'Footprint'
-            TextInput:
-                id: fp_text_id
-                text: ''
-                multiline: False
-                disabled: True
-            Label:
-                text: 'Value'
-            TextInput:
-                id: val_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Datasheet'
-            TextInput:
-                id: ds_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Manufacturer'
-            TextInput:
-                id: mfr_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Manufacturer Part#'
-            TextInput:
-                id: mfr_pn_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Supplier'
-            TextInput:
-                id: sup_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Supplier Part#'
-            TextInput:
-                id: sup_pn_text_id
-                text: ''
-                multiline: False
-
-
-
 <ComponentTypeView>:
     top_box: top_box
     comp_type_list: comp_type_list
@@ -230,10 +154,6 @@
 
     MenuItem:
         text: 'Component Types'
-        size_hint: (1.0, 0.1)
-
-    MenuItem:
-        text: 'Components'
         size_hint: (1.0, 0.1)
 
     Widget:
