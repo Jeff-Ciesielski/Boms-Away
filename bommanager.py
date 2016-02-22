@@ -14,6 +14,8 @@ from kivy.uix.button import Button
 from kivy.adapters.listadapter import ListAdapter
 from kivy.garden.NavigationDrawer import NavigationDrawer
 from kivy.core.window import Window
+from kivy.uix.accordion import Accordion, AccordionItem
+from kivy.uix.scrollview import ScrollView
 import csv
 
 # TODO: Normalize all input schematic components to follow field
@@ -21,7 +23,6 @@ import csv
 
 SidePanel_AppMenu = {'Load Schematic': ['on_load', None],
                      'Save Schematic': ['on_save', None],
-                     'Components': ['on_component', None],
                      'Component Types': ['on_type', None],
                      'Export BOM as CSV': ['on_export_csv', None],
                      'Quit': ['on_quit', None],
@@ -124,8 +125,11 @@ class ComponentWrapper(object):
         return self._get_field(field)['ref'].strip('"')
 
     def _has_field(self, field):
-        self._get_field(field)
-        return True
+        try:
+            self._get_field(field)
+            return True
+        except:
+            return False
 
     def add_bom_fields(self):
 
@@ -137,10 +141,13 @@ class ComponentWrapper(object):
         ]
 
         for f in _fields:
+
             if self._has_field(f):
                 continue
+
             f_data = {
-                'name': f,
+                'name': '"{}"'.format(f),
+                'ref': '""'
             }
 
             self._cmp.addField(f_data)
@@ -313,6 +320,8 @@ class ComponentTypeContainer(object):
             'Quantity: {}'.format(len(self))
         ])
 
+class ComponentTypeAccordionMember(BoxLayout):
+    pass
 
 class ComponentTypeView(BoxLayout):
     top_box = ObjectProperty(None)
@@ -335,6 +344,7 @@ class ComponentTypeView(BoxLayout):
 
     def attach_update_callback(self, cb):
         self.update_cb = cb
+
 
 class BomManagerApp(App):
     top_box = ObjectProperty(None)
