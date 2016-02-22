@@ -280,7 +280,6 @@ class ComponentTypeView(BoxLayout):
     update_cb = ObjectProperty(None)
     data = ListProperty([])
 
-    component_map = DictProperty({})
     component_type_map = DictProperty({})
     schematics = DictProperty({})
 
@@ -300,29 +299,14 @@ class BomManagerApp(App):
     top_box = ObjectProperty(None)
     scrollbox = ObjectProperty(None)
     comp_list = ObjectProperty(None)
-    component_data = ListProperty([])
     component_type_data = ListProperty([])
 
-    component_map = DictProperty({})
     component_type_map = DictProperty({})
     schematics = DictProperty({})
 
     # I really hate global state, but this seems like the fastest path forward...
     _current_component = None
     _current_type = None
-
-    def _update_component_selection(self, adapter, *args):
-
-        long_key = adapter.selection.pop().text
-
-        ref, val, fp = [x.strip() for x in long_key.split('|')]
-        type_key = '{}|{}'.format(val, fp)
-
-        # Save any changes
-        self.update_component()
-
-        self._current_component = self.component_map[ref]
-        self.load_component()
 
     def _update_component_type_selection(self, adapter, *args):
         long_key = adapter.selection.pop().text
@@ -415,21 +399,14 @@ class BomManagerApp(App):
 
     def _reset(self):
         self.schematics = {}
-        self.component_map = {}
         self.component_type_map = {}
 
     def _update_data(self):
 
         type_data = []
-        component_data = []
 
         for ctname, ct in self.component_type_map.items():
             type_data.append('{} | {}'.format(ct.value, ct.footprint))
-
-        for cname, c in self.component_map.items():
-            component_data.append('{} | {} | {}'.format(c.reference,
-                                                        c.value,
-                                                        c.footprint))
 
         # Sort and attach data
         self.type_view.attach_data(sorted(type_data))
@@ -471,8 +448,6 @@ class BomManagerApp(App):
 
                 comp_type_key = '{}|{}'.format(c.value, c.footprint)
                 comp_key = c.reference
-
-                self.component_map[comp_key] = c
 
                 if comp_type_key not in self.component_type_map:
                     self.component_type_map[comp_type_key] = ComponentTypeContainer()
