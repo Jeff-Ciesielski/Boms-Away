@@ -142,3 +142,13 @@
             Button:
                 text: "Export"
                 on_release: root.export(filechooser.path, text_input.text)
+
+<UniquePartSelectorDialog>:
+    top_box: top_box_id
+    BoxLayout:
+        id: top_box_id
+        size: root.size
+        pos: root.pos
+        orientation: 'vertical'
+        Label:
+            text: 'Duplicate Component Value found! Please select which format to follow:'

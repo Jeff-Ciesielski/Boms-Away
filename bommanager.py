@@ -66,6 +66,10 @@ class MenuItem(Button):
         getattr(AppRoot, function_to_call)()
 
 
+class UniquePartSelectorDialog(BoxLayout):
+    selection = NumericProperty(None)
+    dismiss = ObjectProperty(None)
+
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
@@ -184,6 +188,10 @@ class ComponentTypeContainer(object):
 
     # TODO: Add validation function and enforce!
 
+    def extract_components(self, other):
+        for c in other._components:
+            self.add(c)
+
     @property
     def refs(self):
         return ';'.join([x.reference for x in self._components])
@@ -223,6 +231,7 @@ class ComponentTypeContainer(object):
             '-' * 20,
             'Value: {}'.format(self.value),
             'Footprint: {}'.format(self.footprint),
+            'Quantity: {}'.format(len(self))
         ])
 
 class ComponentView(BoxLayout):
@@ -400,6 +409,7 @@ class BomManagerApp(App):
                     self.component_type_map[comp_type_key] = ComponentTypeContainer()
                 self.component_type_map[comp_type_key].add(c)
 
+        # TODO: Move these somewhere more appropriate
         self.comp_view.attach_selection_callback(self.print_selected_component)
         self.type_view.attach_selection_callback(self.print_component_type)
 
@@ -409,19 +419,61 @@ class BomManagerApp(App):
         """
         Performs consolidation
         """
+
+        def consolidation_closure(index, clo_cl, clo_popup):
+            def fn(*args):
+                print "Selected:", index, clo_cl[index]
+
+                sel = clo_cl.pop(index)
+
+                for rem in clo_cl:
+
+                    ct_key = '{}|{}'.format(rem.value,
+                                            rem.footprint)
+                    rem.value = sel.value
+                    sel.extract_components(rem)
+                    self.component_type_map.pop(ct_key, None)
+
+
+                self._update_data()
+                clo_popup.dismiss()
+            return fn
+
         uniq = {}
+        dups = {}
 
         ctmap_keys = self.component_type_map.keys()
 
+        # Find all duplicated components and put them into a dups map
         for ct in ctmap_keys:
             cthsh = ct.upper().replace(' ','')
 
             if cthsh in uniq:
-                print "Duplicated part!"
-                print uniq[cthsh]
-                print self.component_type_map[ct]
+                if not cthsh in dups:
+                    dups[cthsh] = [uniq[cthsh]]
 
-            uniq[cthsh] = self.component_type_map[ct]
+                dups[cthsh].append(self.component_type_map[ct])
+            else:
+                uniq[cthsh] = self.component_type_map[ct]
+
+        for d, cl in dups.items():
+
+            _popup = Popup(title='Duplicate part value',
+                           auto_dismiss=False,
+                           size_hint = (0.9, 0.9))
+            content = UniquePartSelectorDialog()
+            for idx, c in enumerate(cl):
+                content.top_box.add_widget(
+                    Button(text=c.value,
+                           on_release=consolidation_closure(idx,
+                                                            cl,
+                                                            _popup))
+                )
+
+            _popup.content=content
+            _popup.open()
+
+            print d, cl
 
     def build(self):
         global AppRoot
