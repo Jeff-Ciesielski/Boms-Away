@@ -90,47 +90,88 @@ class SelectableList(BoxLayout):
 
 # TODO: Enumerate field values
 class ComponentWrapper(object):
+
+    _builtin_field_map = {
+        'reference': '0',
+        'value': '1',
+        'footprint': '2',
+        'datasheet': '3',
+    }
     def __init__(self, base_component):
         self._cmp = base_component
 
-    def _get_field(self, field_no):
-        return (
-            [x for x in self._cmp.fields if x['id'] == str(field_no)][0]
-        )
+    def _get_field(self, field_name):
+        if field_name in self._builtin_field_map:
+            field = [
+                x for x in self._cmp.fields
+                if
+                x['id'] == self._builtin_field_map[field_name]
+            ][0]
+        else:
+            field = [
+                x for x in self._cmp.fields
+                if
+                x['name'].strip('"') == field_name
+            ][0]
 
-    def _set_field_value(self, field_no, value):
-        f = self._get_field(field_no)
+        return field
+
+    def _set_field_value(self, field, value):
+        f = self._get_field(field)
         f['ref'] = '"{}"'.format(value)
 
-    def _get_field_value(self, field_no):
-        try:
-            return self._get_field(field_no)['ref'].strip('"')
-        except:
-            return ''
+    def _get_field_value(self, field):
+        return self._get_field(field)['ref'].strip('"')
+
+    def _has_field(self, field):
+        self._get_field(field)
+        return True
+
+    def add_bom_fields(self):
+
+        _fields = [
+            "MFR",
+            "MPN",
+            "SPR",
+            "SPN",
+        ]
+
+        for f in _fields:
+            if self._has_field(f):
+                continue
+            f_data = {
+                'name': f,
+            }
+
+            self._cmp.addField(f_data)
+
+    @property
+    def num_fields(self):
+        return len(self._cmp.fields)
 
     @property
     def reference(self):
-        return self._get_field_value(0)
+        return self._get_field_value('reference')
 
     @property
     def value(self):
-        return self._get_field_value(1)
+        return self._get_field_value('value')
 
     @value.setter
     def value(self, val):
-        self._set_field_value(1, val)
+        self._set_field_value('value', val)
 
     @property
     def footprint(self):
-        return self._get_field_value(2)
+        return self._get_field_value('footprint')
 
     @property
     def datasheet(self):
-        return self._get_field_value(3)
+        return self._get_field_value('datasheet')
 
     @datasheet.setter
     def datasheet(self, val):
-        self._set_field_value(3, val)
+        self._set_field_value('datasheet', val)
 
     @property
     def is_virtual(self):
@@ -140,35 +181,35 @@ class ComponentWrapper(object):
 
     @property
     def manufacturer(self):
-        return self._get_field_value(7)
+        return self._get_field_value('MFR')
 
     @manufacturer.setter
     def manufacturer(self, mfr):
-        self._set_field_value(7, mfr)
+        self._set_field_value('MFR', mfr)
 
     @property
     def supplier(self):
-        return self._get_field_value(6)
+        return self._get_field_value('SPR')
 
     @supplier.setter
     def supplier(self, sup):
-        self._set_field_value(6, sup)
+        self._set_field_value('SPR', sup)
 
     @property
     def manufacturer_pn(self):
-        return self._get_field_value(5)
+        return self._get_field_value('MPN')
 
     @manufacturer_pn.setter
     def manufacturer_pn(self, pn):
-        self._set_field_value(5, pn)
+        self._set_field_value('MPN', pn)
 
     @property
     def supplier_pn(self):
-        return self._get_field_value(4)
+        return self._get_field_value('SPN')
 
     @supplier_pn.setter
     def supplier_pn(self, pn):
-        self._set_field_value(4, pn)
+        self._set_field_value('SPN', pn)
 
     def __str__(self):
         return '\n'.join([
@@ -320,8 +361,6 @@ class BomManagerApp(App):
         self.load_component_type()
 
     def load_component_type(self):
-
-
         ct = self._current_type
 
         self.type_view.qty_text.text = str(len(ct))
@@ -445,6 +484,8 @@ class BomManagerApp(App):
                 # Skip virtual components (power, gnd, etc)
                 if c.is_virtual:
                     continue
+
+                c.add_bom_fields()
 
                 comp_type_key = '{}|{}'.format(c.value, c.footprint)
                 comp_key = c.reference
