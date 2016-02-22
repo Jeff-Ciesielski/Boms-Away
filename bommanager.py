@@ -125,6 +125,14 @@ class ComponentWrapper(object):
         return self._get_field_value(2)
 
     @property
+    def datasheet(self):
+        return self._get_field_value(3)
+
+    @datasheet.setter
+    def datasheet(self, val):
+        self._set_field_value(3, val)
+
+    @property
     def is_virtual(self):
         if self._cmp.labels['ref'][0] == '#':
             return True
@@ -210,20 +218,45 @@ class ComponentTypeContainer(object):
         return self._components[0].footprint
 
     @property
+    def datasheet(self):
+        return self._components[0].datasheet
+
+    @property
     def manufacturer(self):
         return self._components[0].manufacturer
+
+    @manufacturer.setter
+    def manufacturer(self, mfgr):
+        for c in self._components:
+            c.manufacturer = mfgr
 
     @property
     def manufacturer_pn(self):
         return self._components[0].manufacturer_pn
 
+    @manufacturer_pn.setter
+    def manufacturer_pn(self, pn):
+        for c in self._components:
+            c.manufacturer_pn = pn
+
     @property
     def supplier(self):
         return self._components[0].supplier
 
+    @supplier.setter
+    def supplier(self, sup):
+        for c in self._components:
+            c.supplier = sup
+
     @property
     def supplier_pn(self):
         return self._components[0].supplier_pn
+
+    @supplier_pn.setter
+    def supplier_pn(self, pn):
+        for c in self._components:
+            c.supplier_pn = pn
+            
 
     def __str__(self):
         return '\n'.join([
@@ -283,19 +316,40 @@ class BomManagerApp(App):
     component_type_map = DictProperty({})
     schematics = DictProperty({})
 
-    def print_component_type(self, adapter, *args):
+    def load_component_type(self, adapter, *args):
         # TODO: Make component types a map of maps (instead of a map
         # of lists)
         long_key = adapter.selection.pop().text
         val, fp = [x.strip() for x in long_key.split('|')]
         type_key = '{}|{}'.format(val, fp)
-        print self.component_type_map[type_key]
+        ct = self.component_type_map[type_key]
 
-    def print_selected_component(self, adapter, *args):
+        self.type_view.qty_text.text = str(len(ct))
+        self.type_view.refs_text.text = ct.refs
+        self.type_view.val_text.text = ct.value
+        self.type_view.fp_text.text = ct.footprint
+        self.type_view.ds_text.text = ct.datasheet
+        self.type_view.mfr_text.text = ct.manufacturer
+        self.type_view.mfr_pn_text.text = ct.manufacturer_pn
+        self.type_view.sup_text.text = ct.supplier
+        self.type_view.sup_pn_text.text = ct.supplier_pn
+        
+
+    def load_component(self, adapter, *args):
         long_key = adapter.selection.pop().text
         ref, val, fp = [x.strip() for x in long_key.split('|')]
         type_key = '{}|{}'.format(val, fp)
-        print self.component_map[ref]
+        c = self.component_map[ref]
+        
+        self.comp_view.ref_text.text = c.reference
+        self.comp_view.val_text.text = c.value
+        self.comp_view.fp_text.text = c.footprint
+        self.comp_view.ds_text.text = c.datasheet
+        self.comp_view.mfr_text.text = c.manufacturer
+        self.comp_view.mfr_pn_text.text = c.manufacturer_pn
+        self.comp_view.sup_text.text = c.supplier
+        self.comp_view.sup_pn_text.text = c.supplier_pn
+        
 
     def dismiss_popup(self):
         self._popup.dismiss()
@@ -410,8 +464,8 @@ class BomManagerApp(App):
                 self.component_type_map[comp_type_key].add(c)
 
         # TODO: Move these somewhere more appropriate
-        self.comp_view.attach_selection_callback(self.print_selected_component)
-        self.type_view.attach_selection_callback(self.print_component_type)
+        self.comp_view.attach_selection_callback(self.load_component)
+        self.type_view.attach_selection_callback(self.load_component_type)
 
         self._update_data()
 
@@ -430,7 +484,14 @@ class BomManagerApp(App):
 
                     ct_key = '{}|{}'.format(rem.value,
                                             rem.footprint)
+
+                    # Set all relevant fields
                     rem.value = sel.value
+                    rem.manufacturer = sel.manufacturer
+                    rem.manufacturer_pn = sel.manufacturer_pn
+                    rem.supplier_pn = sel.supplier_pn
+                    rem.supplier = sel.supplier
+
                     sel.extract_components(rem)
                     self.component_type_map.pop(ct_key, None)
 
@@ -487,7 +548,7 @@ class BomManagerApp(App):
         self.comp_view = ComponentView()
         self.type_view = ComponentTypeView()
 
-        self.main_panel = self.comp_view
+        self.main_panel = self.type_view
 
         self.navdrawer.anim_type = 'slide_above_anim'
         self.navdrawer.add_widget(self.main_panel)
