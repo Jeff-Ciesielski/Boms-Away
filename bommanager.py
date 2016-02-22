@@ -256,7 +256,7 @@ class ComponentTypeContainer(object):
     def supplier_pn(self, pn):
         for c in self._components:
             c.supplier_pn = pn
-            
+
 
     def __str__(self):
         return '\n'.join([
@@ -271,6 +271,7 @@ class ComponentView(BoxLayout):
     top_box = ObjectProperty(None)
     scrollbox = ObjectProperty(None)
     comp_list = ObjectProperty(None)
+    update_cb = ObjectProperty(None)
     data = ListProperty([])
 
     component_map = DictProperty({})
@@ -286,10 +287,18 @@ class ComponentView(BoxLayout):
     def attach_selection_callback(self, cb):
         self.comp_list.component_view.adapter.bind(on_selection_change=cb)
 
+    def attach_update_callback(self, cb):
+        self.update_cb = cb
+
+    def get_selection(self):
+        return self.comp_list.component_view.adapter.selection[0].text
+
+
 class ComponentTypeView(BoxLayout):
     top_box = ObjectProperty(None)
     scrollbox = ObjectProperty(None)
     comp_type_list = ObjectProperty(None)
+    update_cb = ObjectProperty(None)
     data = ListProperty([])
 
     component_map = DictProperty({})
@@ -305,6 +314,13 @@ class ComponentTypeView(BoxLayout):
     def attach_selection_callback(self, cb):
         self.comp_type_list.component_view.adapter.bind(on_selection_change=cb)
 
+    def attach_update_callback(self, cb):
+        self.update_cb = cb
+
+    def get_selection(self):
+        return self.comp_type_list.component_view.adapter.selection[0].text
+
+
 class BomManagerApp(App):
     top_box = ObjectProperty(None)
     scrollbox = ObjectProperty(None)
@@ -316,13 +332,21 @@ class BomManagerApp(App):
     component_type_map = DictProperty({})
     schematics = DictProperty({})
 
-    def load_component_type(self, adapter, *args):
-        # TODO: Make component types a map of maps (instead of a map
-        # of lists)
-        long_key = adapter.selection.pop().text
+    def _get_component_by_selection(self):
+        long_key = self.comp_view.get_selection()
+        ref, val, fp = [x.strip() for x in long_key.split('|')]
+        type_key = '{}|{}'.format(val, fp)
+        return self.component_map[ref]
+
+    def _get_component_type_by_selection(self):
+        long_key = self.type_view.get_selection()
         val, fp = [x.strip() for x in long_key.split('|')]
         type_key = '{}|{}'.format(val, fp)
-        ct = self.component_type_map[type_key]
+        return self.component_type_map[type_key]
+
+
+    def load_component_type(self, adapter, *args):
+        ct = self._get_component_type_by_selection()
 
         self.type_view.qty_text.text = str(len(ct))
         self.type_view.refs_text.text = ct.refs
@@ -333,14 +357,10 @@ class BomManagerApp(App):
         self.type_view.mfr_pn_text.text = ct.manufacturer_pn
         self.type_view.sup_text.text = ct.supplier
         self.type_view.sup_pn_text.text = ct.supplier_pn
-        
 
     def load_component(self, adapter, *args):
-        long_key = adapter.selection.pop().text
-        ref, val, fp = [x.strip() for x in long_key.split('|')]
-        type_key = '{}|{}'.format(val, fp)
-        c = self.component_map[ref]
-        
+        c = self._get_component_by_selection()
+
         self.comp_view.ref_text.text = c.reference
         self.comp_view.val_text.text = c.value
         self.comp_view.fp_text.text = c.footprint
@@ -349,7 +369,13 @@ class BomManagerApp(App):
         self.comp_view.mfr_pn_text.text = c.manufacturer_pn
         self.comp_view.sup_text.text = c.supplier
         self.comp_view.sup_pn_text.text = c.supplier_pn
-        
+
+
+    def update_component(self):
+        pass
+
+    def update_component_type(self):
+        pass
 
     def dismiss_popup(self):
         self._popup.dismiss()
@@ -545,7 +571,9 @@ class BomManagerApp(App):
         self.type_view = ComponentTypeView()
 
         self.comp_view.attach_selection_callback(self.load_component)
+        self.comp_view.attach_update_callback(self.update_component)
         self.type_view.attach_selection_callback(self.load_component_type)
+        self.type_view.attach_update_callback(self.update_component_type)
 
         self.main_panel = self.type_view
 
