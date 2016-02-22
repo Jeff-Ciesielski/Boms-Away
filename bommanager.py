@@ -61,7 +61,7 @@ class MenuItem(Button):
         try:
             function_to_call = SidePanel_AppMenu[self.text][id_AppMenu_METHOD]
         except:
-            print 'errore di configurazione dizionario voci menu'
+            print 'Error configuring menu'
             return
         getattr(AppRoot, function_to_call)()
 
@@ -320,7 +320,6 @@ class ComponentTypeView(BoxLayout):
     def attach_update_callback(self, cb):
         self.update_cb = cb
 
-
 class BomManagerApp(App):
     top_box = ObjectProperty(None)
     scrollbox = ObjectProperty(None)
@@ -537,8 +536,6 @@ class BomManagerApp(App):
 
         def consolidation_closure(index, clo_cl, clo_popup):
             def fn(*args):
-                print "Selected:", index, clo_cl[index]
-
                 sel = clo_cl.pop(index)
 
                 for rem in clo_cl:
@@ -594,8 +591,6 @@ class BomManagerApp(App):
 
             _popup.content=content
             _popup.open()
-
-            print d, cl
 
     def _bind_focus_callbacks(self):
         comp_textboxes = [
