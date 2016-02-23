@@ -80,6 +80,7 @@ def initialize():
         'bommgr.db'
     )
 
+    # TODO: Should we enforce a lockfile here?
     _eng = create_engine('sqlite:///{}'.format(datastore_path))
     Base.metadata.create_all(_eng)
     _initialized = True
