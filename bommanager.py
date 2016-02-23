@@ -544,6 +544,7 @@ class BomManagerApp(App):
 
                 for rem in clo_cl:
 
+                    old_typeid = rem.typeid
                     # Set all relevant fields
                     rem.value = sel.value
                     rem.manufacturer = sel.manufacturer
@@ -552,7 +553,7 @@ class BomManagerApp(App):
                     rem.supplier = sel.supplier
 
                     sel.extract_components(rem)
-                    self.component_type_map.pop(rem.typeid, None)
+                    self.component_type_map.pop(old_typeid, None)
 
                 self._update_data()
                 clo_popup.dismiss()
