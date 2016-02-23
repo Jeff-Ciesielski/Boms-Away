@@ -30,6 +30,7 @@
     mfr_pn_text: mfr_pn_text_id
     sup_text: sup_text_id
     sup_pn_text: sup_pn_text_id
+    lookup_button: lookup_button_id
 
     BoxLayout:
         orientation: 'horizontal'
@@ -121,7 +122,10 @@
                 id: sup_pn_text_id
                 text: ''
                 multiline: False
-
+            Button:
+                id: lookup_button_id
+                text: 'Part Lookup'
+                disabled: True
 
 <SidePanel>:
     orientation: 'vertical'

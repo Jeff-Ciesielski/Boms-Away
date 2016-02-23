@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 import os
+import csv
+
 import sch
+import datastore
+
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.properties import NumericProperty, ReferenceListProperty,\
@@ -17,9 +21,6 @@ from kivy.core.window import Window
 from kivy.uix.accordion import Accordion, AccordionItem
 from kivy.uix.scrollview import ScrollView
 
-import datastore
-
-import csv
 
 # TODO: Normalize all input schematic components to follow field
 # guidelines
@@ -349,7 +350,6 @@ class ComponentTypeView(BoxLayout):
     top_box = ObjectProperty(None)
     scrollbox = ObjectProperty(None)
     comp_type_list = ObjectProperty(None)
-    update_cb = ObjectProperty(None)
     data = ListProperty([])
 
     component_type_map = DictProperty({})
@@ -364,9 +364,6 @@ class ComponentTypeView(BoxLayout):
     def attach_selection_callback(self, cb):
         self.comp_type_list.component_view.adapter.bind(on_selection_change=cb)
 
-    def attach_update_callback(self, cb):
-        self.update_cb = cb
-
 
 class BomManagerApp(App):
     top_box = ObjectProperty(None)
@@ -379,7 +376,6 @@ class BomManagerApp(App):
 
     # I really hate global state, but this seems like the fastest path
     # forward...
-    _current_component = None
     _current_type = None
 
     def _update_component_type_selection(self, adapter, *args):
@@ -388,7 +384,7 @@ class BomManagerApp(App):
         type_key = '{}|{}'.format(val, fp)
 
         # Save any changes
-        self.update_component_type()
+        self.save_component_type_changes()
 
         self._current_type = self.component_type_map[type_key]
         self.load_component_type()
@@ -405,6 +401,9 @@ class BomManagerApp(App):
         self.type_view.mfr_pn_text.text = ct.manufacturer_pn
         self.type_view.sup_text.text = ct.supplier
         self.type_view.sup_pn_text.text = ct.supplier_pn
+
+        # Enable the part lookup button
+        self.type_view.lookup_button.disabled = False
 
     def update_datastore(self, ct):
         # TODO: Implement get_or_create, this shit is bananas
@@ -496,7 +495,7 @@ class BomManagerApp(App):
 
         self.ds.commit()
 
-    def update_component_type(self, *args):
+    def save_component_type_changes(self, *args):
 
         if self._current_type is None:
             return
@@ -615,6 +614,11 @@ class BomManagerApp(App):
                 if c.is_virtual:
                     continue
 
+                # Skip anything that is missing either a value or a
+                # footprint
+                if not len(c.footprint.strip()) or not len(c.value.strip()):
+                    continue
+
                 c.add_bom_fields()
 
                 if c.typeid not in self.component_type_map:
@@ -685,20 +689,6 @@ class BomManagerApp(App):
             _popup.content = content
             _popup.open()
 
-    def _bind_focus_callbacks(self):
-        type_textboxes = [
-            self.type_view.val_text,
-            self.type_view.ds_text,
-            self.type_view.mfr_text,
-            self.type_view.mfr_pn_text,
-            self.type_view.sup_text,
-            self.type_view.sup_pn_text,
-
-        ]
-
-        for tb in type_textboxes:
-            tb.bind(focus=self.update_component_type)
-
     def _init_config_dir(self):
         config_dir = os.path.join(
             os.path.expanduser("~"),
@@ -730,10 +720,6 @@ class BomManagerApp(App):
         self.type_view.attach_selection_callback(
             self._update_component_type_selection
         )
-        self.type_view.attach_update_callback(self.update_component_type)
-
-        # Bind all textbox focus changes to save component changes
-        self._bind_focus_callbacks()
 
         self.main_panel = self.type_view
 
@@ -756,6 +742,7 @@ class BomManagerApp(App):
         """
         Recursively loads a KiCad schematic and all subsheets
         """
+        self.save_component_type_changes()
         self.navdrawer.close_sidepanel()
         self.show_load()
 
@@ -763,6 +750,7 @@ class BomManagerApp(App):
         """
         Saves all schematics
         """
+        self.save_component_type_changes()
         for name, schematic in self.schematics.items():
             schematic.save()
 
@@ -770,18 +758,21 @@ class BomManagerApp(App):
         """
         Switches to component type (grouped) view
         """
+        self.save_component_type_changes()
         self._switch_main_page(self.type_view)
 
     def on_quit(self):
         """
         Quits the application
         """
+        self.save_component_type_changes()
         exit(0)
 
     def on_export_csv(self):
         """
         Exports Bill of Materials as a CSV File
         """
+        self.save_component_type_changes()
         self.show_export()
 
     def on_consolidate(self):
@@ -789,6 +780,7 @@ class BomManagerApp(App):
         Consolidates components (i.e. 1K 0603 and 1k 0603 become same
         component group -> 1K 0603 x 2)
         """
+        self.save_component_type_changes()
         self._consolidate()
 
     def _switch_main_page(self, panel):
