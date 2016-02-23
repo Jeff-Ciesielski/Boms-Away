@@ -74,6 +74,7 @@ class UniquePartSelectorDialog(BoxLayout):
     selection = NumericProperty(None)
     dismiss = ObjectProperty(None)
 
+
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
@@ -82,6 +83,7 @@ class LoadDialog(FloatLayout):
 class ExportDialog(FloatLayout):
     export = ObjectProperty(None)
     cancel = ObjectProperty(None)
+
 
 # TODO: Attempt to fold selectablelist/componentview/componenttypeview
 # into one base class, then subclass for the editor views
@@ -101,6 +103,7 @@ class ComponentWrapper(object):
         'footprint': '2',
         'datasheet': '3',
     }
+
     def __init__(self, base_component):
         self._cmp = base_component
 
@@ -154,6 +157,12 @@ class ComponentWrapper(object):
             }
 
             self._cmp.addField(f_data)
+
+    @property
+    def uid(self):
+        return '{}|{}|{}'.format(self.reference.upper(),
+                                 self.value.upper(),
+                                 self.footprint.upper())
 
     @property
     def num_fields(self):
@@ -229,6 +238,7 @@ class ComponentWrapper(object):
             'Footprint: {}'.format(self.footprint),
         ])
 
+
 class ComponentTypeContainer(object):
     def __init__(self):
         self._components = []
@@ -238,7 +248,8 @@ class ComponentTypeContainer(object):
         if len(self._components):
             if ((component.value != self._components[0].value) or
                 (component.footprint != self._components[0].footprint)):
-                raise Exception("Attempted to insert unlike component into ComponentTypeContainer")
+                raise Exception("Attempted to insert unlike "
+                                "component into ComponentTypeContainer")
 
         self._components.append(component)
 
@@ -250,6 +261,11 @@ class ComponentTypeContainer(object):
     def extract_components(self, other):
         for c in other._components:
             self.add(c)
+
+    @property
+    def uid(self):
+        return '{}|{}'.format(self.value.upper(),
+                              self.footprint.upper())
 
     @property
     def refs(self):
@@ -313,7 +329,6 @@ class ComponentTypeContainer(object):
         for c in self._components:
             c.supplier_pn = pn
 
-
     def __str__(self):
         return '\n'.join([
             '\nComponent Type Container',
@@ -323,8 +338,10 @@ class ComponentTypeContainer(object):
             'Quantity: {}'.format(len(self))
         ])
 
+
 class ComponentTypeAccordionMember(BoxLayout):
     pass
+
 
 class ComponentTypeView(BoxLayout):
     top_box = ObjectProperty(None)
@@ -358,7 +375,8 @@ class BomManagerApp(App):
     component_type_map = DictProperty({})
     schematics = DictProperty({})
 
-    # I really hate global state, but this seems like the fastest path forward...
+    # I really hate global state, but this seems like the fastest path
+    # forward...
     _current_component = None
     _current_type = None
 
@@ -411,7 +429,8 @@ class BomManagerApp(App):
         self._popup.open()
 
     def show_export(self):
-        content = ExportDialog(export=self.export_csv, cancel=self.dismiss_popup)
+        content = ExportDialog(export=self.export_csv,
+                               cancel=self.dismiss_popup)
         self._popup = Popup(title="Export BOM CSV", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
@@ -422,7 +441,8 @@ class BomManagerApp(App):
         with open(os.path.join(path, filename), 'w') as csvfile:
             wrt = csv.writer(csvfile)
 
-            wrt.writerow(['Refs', 'Value', 'Footprint', 'QTY', 'MFR', 'MPN', 'SPR', 'SPN'])
+            wrt.writerow(['Refs', 'Value', 'Footprint',
+                          'QTY', 'MFR', 'MPN', 'SPR', 'SPN'])
 
             for ctype in sorted(self.component_type_map):
                 ctcont = self.component_type_map[ctype]
@@ -504,7 +524,9 @@ class BomManagerApp(App):
                 comp_key = c.reference
 
                 if comp_type_key not in self.component_type_map:
-                    self.component_type_map[comp_type_key] = ComponentTypeContainer()
+                    self.component_type_map[comp_type_key] = (
+                        ComponentTypeContainer()
+                    )
                 self.component_type_map[comp_type_key].add(c)
 
         self._update_data()
@@ -533,7 +555,6 @@ class BomManagerApp(App):
                     sel.extract_components(rem)
                     self.component_type_map.pop(ct_key, None)
 
-
                 self._update_data()
                 clo_popup.dismiss()
             return fn
@@ -545,10 +566,10 @@ class BomManagerApp(App):
 
         # Find all duplicated components and put them into a dups map
         for ct in ctmap_keys:
-            cthsh = ct.upper().replace(' ','')
+            cthsh = ct.upper().replace(' ', '')
 
             if cthsh in uniq:
-                if not cthsh in dups:
+                if cthsh not in dups:
                     dups[cthsh] = [uniq[cthsh]]
 
                 dups[cthsh].append(self.component_type_map[ct])
@@ -559,7 +580,7 @@ class BomManagerApp(App):
 
             _popup = Popup(title='Duplicate part value',
                            auto_dismiss=False,
-                           size_hint = (0.9, 0.9))
+                           size_hint=(0.9, 0.9))
             content = UniquePartSelectorDialog()
             for idx, c in enumerate(cl):
                 content.top_box.add_widget(
@@ -569,7 +590,7 @@ class BomManagerApp(App):
                                                             _popup))
                 )
 
-            _popup.content=content
+            _popup.content = content
             _popup.open()
 
     def _bind_focus_callbacks(self):
@@ -587,7 +608,7 @@ class BomManagerApp(App):
             tb.bind(focus=self.update_component_type)
 
     def _init_config_dir(self):
-        config_dir =  os.path.join(
+        config_dir = os.path.join(
             os.path.expanduser("~"),
             '.kicadbommgr.d'
         )
@@ -611,7 +632,9 @@ class BomManagerApp(App):
 
         self.type_view = ComponentTypeView()
 
-        self.type_view.attach_selection_callback(self._update_component_type_selection)
+        self.type_view.attach_selection_callback(
+            self._update_component_type_selection
+        )
         self.type_view.attach_update_callback(self.update_component_type)
 
         # Bind all textbox focus changes to save component changes
@@ -668,7 +691,8 @@ class BomManagerApp(App):
 
     def on_consolidate(self):
         """
-        Consolidates components (i.e. 1K 0603 and 1k 0603 become same component group -> 1K 0603 x 2)
+        Consolidates components (i.e. 1K 0603 and 1k 0603 become same
+        component group -> 1K 0603 x 2)
         """
         self._consolidate()
 
