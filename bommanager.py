@@ -16,6 +16,9 @@ from kivy.garden.NavigationDrawer import NavigationDrawer
 from kivy.core.window import Window
 from kivy.uix.accordion import Accordion, AccordionItem
 from kivy.uix.scrollview import ScrollView
+
+import datastore
+
 import csv
 
 # TODO: Normalize all input schematic components to follow field
@@ -583,9 +586,23 @@ class BomManagerApp(App):
         for tb in type_textboxes:
             tb.bind(focus=self.update_component_type)
 
+    def _init_config_dir(self):
+        config_dir =  os.path.join(
+            os.path.expanduser("~"),
+            '.kicadbommgr.d'
+        )
+
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
+
     def build(self):
         global AppRoot
         AppRoot = self
+
+        self._init_config_dir()
+
+        datastore.initialize()
+        self.ds = datastore.get_session()
 
         self.navdrawer = NavDrawer()
 
