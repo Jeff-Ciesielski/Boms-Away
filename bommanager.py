@@ -161,10 +161,10 @@ class ComponentWrapper(object):
             self._cmp.addField(f_data)
 
     @property
-    def uid(self):
-        return '{}|{}|{}'.format(self.reference.upper(),
-                                 self.value.upper(),
-                                 self.footprint.upper())
+    def typeid(self):
+        return '{}|{}'.format(self.value,
+                              self.footprint)
+
 
     @property
     def num_fields(self):
@@ -265,9 +265,9 @@ class ComponentTypeContainer(object):
             self.add(c)
 
     @property
-    def uid(self):
-        return '{}|{}'.format(self.value.upper(),
-                              self.footprint.upper())
+    def typeid(self):
+        return '{}|{}'.format(self.value,
+                              self.footprint)
 
     @property
     def refs(self):
@@ -480,7 +480,10 @@ class BomManagerApp(App):
         type_data = []
 
         for ctname, ct in self.component_type_map.items():
-            type_data.append('{} | {}'.format(ct.value, ct.footprint))
+            type_data.append('{} | {}'.format(
+                ct.value,
+                ct.footprint,
+            ))
 
         # Sort and attach data
         self.type_view.attach_data(sorted(type_data))
@@ -522,14 +525,11 @@ class BomManagerApp(App):
 
                 c.add_bom_fields()
 
-                comp_type_key = '{}|{}'.format(c.value, c.footprint)
-                comp_key = c.reference
-
-                if comp_type_key not in self.component_type_map:
-                    self.component_type_map[comp_type_key] = (
+                if c.typeid not in self.component_type_map:
+                    self.component_type_map[c.typeid] = (
                         ComponentTypeContainer()
                     )
-                self.component_type_map[comp_type_key].add(c)
+                self.component_type_map[c.typeid].add(c)
 
         self._update_data()
 
@@ -544,9 +544,6 @@ class BomManagerApp(App):
 
                 for rem in clo_cl:
 
-                    ct_key = '{}|{}'.format(rem.value,
-                                            rem.footprint)
-
                     # Set all relevant fields
                     rem.value = sel.value
                     rem.manufacturer = sel.manufacturer
@@ -555,7 +552,7 @@ class BomManagerApp(App):
                     rem.supplier = sel.supplier
 
                     sel.extract_components(rem)
-                    self.component_type_map.pop(ct_key, None)
+                    self.component_type_map.pop(rem.typeid, None)
 
                 self._update_data()
                 clo_popup.dismiss()
@@ -706,5 +703,4 @@ class BomManagerApp(App):
 
 
 if __name__ == '__main__':
-
     BomManagerApp().run()
