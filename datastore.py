@@ -13,15 +13,20 @@ class ComponentValue(Base):
     __tablename__ = 'component_value'
     id = Column(Integer, primary_key=True)
     value = Column(String(64), nullable=False)
-    uniqe_parts = relationship('UniquePart')
+    unique_parts = relationship('UniquePart', backref='ComponentValue', lazy='dynamic')
 
 
 class Footprint(Base):
     __tablename__ = 'footprint'
     id = Column(Integer, primary_key=True)
     name = Column(String(64), nullable=False)
-    unique_parts = relationship('UniquePart')
+    unique_parts = relationship('UniquePart', backref='Footprint', lazy='dynamic')
 
+
+class Datasheet(Base):
+    __tablename__ = 'datasheet'
+    id = Column(Integer, primary_key=True)
+    url = Column(String(256), nullable=False)
 
 class UniquePart(Base):
     __tablename__ = 'unique_part'
@@ -29,7 +34,7 @@ class UniquePart(Base):
     component_value_id = Column(Integer, ForeignKey('component_value.id'))
     component_value = relationship('ComponentValue')
     footprint_id = Column(Integer, ForeignKey('footprint.id'))
-    footprint_value = relationship('Footprint')
+    footprint = relationship('Footprint')
 
 
 class Manufacturer(Base):
@@ -51,7 +56,7 @@ class Supplier(Base):
 class ManufacturerPart(Base):
     __tablename__ = 'manufacturer_part'
     id = Column(Integer, primary_key=True)
-    name = Column(String(64), nullable=False)
+    pn = Column(String(64), nullable=False)
     manufacturer_id = Column(Integer, ForeignKey('manufacturer.id'))
     manufacturer = relationship('Manufacturer')
 
@@ -59,7 +64,7 @@ class ManufacturerPart(Base):
 class SupplierPart(Base):
     __tablename__ = 'supplier_part'
     id = Column(Integer, primary_key=True)
-    name = Column(String(64), nullable=False)
+    pn = Column(String(64), nullable=False)
     supplier_id = Column(Integer, ForeignKey('supplier.id'))
     supplier = relationship('Supplier')
 
@@ -93,8 +98,9 @@ def get_session():
         raise Exception("Datastore is not initialized!")
 
     db_session = sessionmaker()
-    db_session.bind = _eng
-
+    print _eng
+    db_session.configure(bind=_eng)
+    
     return db_session()
 
 
