@@ -8,6 +8,7 @@ import datastore
 
 from kivy.app import App
 from kivy.uix.widget import Widget
+from kivy.uix.label import Label
 from kivy.properties import NumericProperty, ReferenceListProperty,\
     ObjectProperty, ListProperty, DictProperty
 from kivy.uix.floatlayout import FloatLayout
@@ -162,6 +163,13 @@ class ComponentWrapper(object):
             self._cmp.addField(f_data)
 
     @property
+    def has_valid_key_fields(self):
+        if not len(self.footprint.strip()) or not len(self.value.strip()):
+            return False
+
+        return True
+        
+    @property
     def typeid(self):
         return '{}|{}'.format(self.value,
                               self.footprint)
@@ -258,7 +266,12 @@ class ComponentTypeContainer(object):
     def __len__(self):
         return len(self._components)
 
-    # TODO: Add validation function and enforce!
+    @property
+    def has_valid_key_fields(self):
+        if not len(self.footprint.strip()) or not len(self.value.strip()):
+            return False
+
+        return True
 
     def extract_components(self, other):
         for c in other._components:
@@ -403,10 +416,14 @@ class BomManagerApp(App):
 
         # Enable the part lookup button
         self.type_view.lookup_button.disabled = False
+        self.type_view.save_button.disabled = False
 
-    def update_datastore(self, ct):
+    def update_datastore(self):
+
+        ct = self._current_type
+
         # TODO: Implement get_or_create, this shit is bananas
-
+        # TODO: Clean up validation
         # Check and update each field
 
         val = (
@@ -479,6 +496,9 @@ class BomManagerApp(App):
         if mfr and mpn and not mpn.manufacturer:
             mpn.manufacturer = mfr
 
+        if mpn and spn:
+            spn.manufacturer_part = mpn
+
         if val and fp:
             # check to see if there is a unique part listing
             up = (
@@ -491,6 +511,9 @@ class BomManagerApp(App):
                 up = datastore.UniquePart(component_value=val,
                                           footprint=fp)
                 self.ds.add(up)
+
+        if mpn:
+            mpn.unique_part = up
 
         self.ds.commit()
 
@@ -508,9 +531,7 @@ class BomManagerApp(App):
         ct.supplier = self.type_view.sup_text.text
         ct.supplier_pn = self.type_view.sup_pn_text.text
 
-        self.update_datastore(ct)
-
-    def dismiss_popup(self):
+    def dismiss_popup(self, *args):
         self._popup.dismiss()
 
     def show_load(self):
@@ -615,7 +636,7 @@ class BomManagerApp(App):
 
                 # Skip anything that is missing either a value or a
                 # footprint
-                if not len(c.footprint.strip()) or not len(c.value.strip()):
+                if not c.has_valid_key_fields:
                     continue
 
                 c.add_bom_fields()
@@ -627,6 +648,9 @@ class BomManagerApp(App):
                 self.component_type_map[c.typeid].add(c)
 
         self._update_data()
+        self._current_type = None
+        self.type_view.lookup_button.disabled = True
+        self.type_view.save_button.disabled = True
 
     def _consolidate(self):
         """
@@ -697,6 +721,117 @@ class BomManagerApp(App):
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
 
+    def attempt_part_lookup(self, *args):
+        ct = self._current_type
+
+        if ct is None:
+            raise Exception("No component selected, this should not happen\n")
+
+        if not ct.has_valid_key_fields:
+            raise Exception("Missing key fields (value / footprint)!")
+
+        # TODO: Wrap these guys up. Think about perhaps having a
+        # component manager class that encompases the datastore and
+        # component type wrappers?
+
+        val = (
+            self.ds.query(datastore.ComponentValue)
+            .filter(datastore.ComponentValue.value == ct.value)
+        ).first()
+
+        fp = (
+            self.ds.query(datastore.Footprint)
+            .filter(datastore.Footprint.name == ct.footprint)
+        ).first()
+
+        if not val or not fp:
+            content = BoxLayout(orientation='vertical')
+            content.add_widget(Label(text="Component does not exist in Datastore"))
+            content.add_widget(Button(text='OK',
+                                      size_hint_y=0.1,
+                                      on_release=self.dismiss_popup))
+            self._popup = Popup(title='No results found',
+                                auto_dismiss=True,
+                                content=content,
+                                size_hint=(0.9, 0.9))
+            self._popup.open()
+            return
+
+            
+
+        up = (
+            self.ds.query(datastore.UniquePart)
+            .filter(datastore.UniquePart.component_value == val,
+                    datastore.UniquePart.footprint == fp)
+        ).first()
+
+        if not up.manufacturer_pns.count():
+            content = BoxLayout(orientation='vertical')
+            content.add_widget(Label(text="No suitable parts found in Datastore"))
+            content.add_widget(Button(text='OK',
+                                      size_hint_y=0.1,
+                                      on_release=self.dismiss_popup))
+            
+            self._popup = Popup(title='No results found',
+                                auto_dismiss=True,
+                                content=content,
+                                size_hint=(0.9, 0.9))
+            self._popup.open()
+            return
+
+        def lookup_closure(clo_mpn, clo_spn, clo_popup, *args):
+            def fn (*args):
+                if clo_mpn:
+                    self.type_view.mfr_text.text = clo_mpn.manufacturer.name
+                    self.type_view.mfr_pn_text.text = clo_mpn.pn
+                if clo_spn:
+                    self.type_view.sup_text.text = clo_spn.supplier.name
+                    self.type_view.sup_pn_text.text = clo_spn.pn
+
+                if clo_popup:
+                    clo_popup.dismiss()
+
+            return fn
+
+        cb_map = {}
+        for pn in up.manufacturer_pns:
+            if not len(pn.supplier_parts):
+                btn_text = '{} (No Known Suppliers)'.format(
+                    pn.pn
+                )
+                cb_map[btn_text] = (pn, None)
+            else:
+                for s_pn in pn.supplier_parts:
+                    btn_text = '{} {} @ {}[{}]'.format(
+                        pn.manufacturer.name,
+                        pn.pn,
+                        s_pn.supplier.name,
+                        s_pn.pn
+                    )
+                    cb_map[btn_text] = (pn, s_pn)
+
+
+        if len(cb_map) == 1:
+            pn, s_pn = cb_map.values().pop()
+            lookup_closure(pn, s_pn, None)()
+        else:
+            content = BoxLayout(orientation='vertical')
+            _popup = Popup(title='No results found',
+                           auto_dismiss=True,
+                           size_hint=(0.9, 0.9))
+
+            for btn_txt, pns in cb_map.items():
+                cb = lookup_closure(pns[0], pns[1], _popup)
+                content.add_widget(Button(text=btn_txt,
+                                          size_hint_y=0.1,
+                                          on_release=cb))
+            _popup.content = content
+            _popup.open()
+
+    def do_datastore_update(self, *args):
+        self.save_component_type_changes()
+        self.update_datastore()
+
     def build(self):
         global AppRoot
         AppRoot = self
@@ -726,6 +861,8 @@ class BomManagerApp(App):
         self.navdrawer.add_widget(self.main_panel)
         Window.bind(mouse_pos=self.on_motion)
 
+        self.type_view.lookup_button.bind(on_release=self.attempt_part_lookup)
+        self.type_view.save_button.bind(on_release=self.do_datastore_update)
         return self.navdrawer
 
     def on_motion(self, etype, motionevent):

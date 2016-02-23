@@ -35,6 +35,7 @@ class UniquePart(Base):
     component_value = relationship('ComponentValue')
     footprint_id = Column(Integer, ForeignKey('footprint.id'))
     footprint = relationship('Footprint')
+    manufacturer_pns = relationship('ManufacturerPart', backref='UniquePart', lazy='dynamic')
 
 
 class Manufacturer(Base):
@@ -59,7 +60,9 @@ class ManufacturerPart(Base):
     pn = Column(String(64), nullable=False)
     manufacturer_id = Column(Integer, ForeignKey('manufacturer.id'))
     manufacturer = relationship('Manufacturer')
-
+    unique_part_id = Column(Integer, ForeignKey('unique_part.id'))
+    unique_part = relationship('UniquePart')
+    supplier_parts = relationship('SupplierPart')
 
 class SupplierPart(Base):
     __tablename__ = 'supplier_part'
@@ -67,6 +70,8 @@ class SupplierPart(Base):
     pn = Column(String(64), nullable=False)
     supplier_id = Column(Integer, ForeignKey('supplier.id'))
     supplier = relationship('Supplier')
+    manufacturer_part_id = Column(Integer, ForeignKey('manufacturer_part.id'))
+    manufacturer_part = relationship('ManufacturerPart')
 
 _initialized = False
 _eng = None
