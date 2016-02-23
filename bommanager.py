@@ -24,13 +24,15 @@ import csv
 # TODO: Normalize all input schematic components to follow field
 # guidelines
 
-SidePanel_AppMenu = {'Load Schematic': ['on_load', None],
-                     'Save Schematic': ['on_save', None],
-                     'Component Types': ['on_type', None],
-                     'Export BOM as CSV': ['on_export_csv', None],
-                     'Quit': ['on_quit', None],
-                     'Consolidate Like Components': ['on_consolidate', None],
-                     }
+SidePanel_AppMenu = {
+    'Load Schematic': ['on_load', None],
+    'Save Schematic': ['on_save', None],
+    'Component Types': ['on_type', None],
+    'Export BOM as CSV': ['on_export_csv', None],
+    'Quit': ['on_quit', None],
+    'Consolidate Like Components': ['on_consolidate', None],
+}
+
 id_AppMenu_METHOD = 0
 id_AppMenu_PANEL = 1
 
