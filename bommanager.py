@@ -166,7 +166,6 @@ class ComponentWrapper(object):
         return '{}|{}'.format(self.value,
                               self.footprint)
 
-
     @property
     def num_fields(self):
         return len(self._cmp.fields)
