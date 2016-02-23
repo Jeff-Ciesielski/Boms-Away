@@ -33,6 +33,16 @@
 
     BoxLayout:
         orientation: 'horizontal'
+        Label:
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: 90
+                    origin: self.center
+            canvas.after:
+                PopMatrix
+            size_hint: (.05, 1)
+            text: '^    Menu    ^'
         BoxLayout:
             orientation: 'vertical'
             spacing: 10
