@@ -66,6 +66,11 @@ automatically added to each component as it is accessed. The tool does
 not attempt to do any import or translation of other existing fields
 (field remapping could be added in a future update).
 
+* Schematic saves are not automatic!
+
+If you would like data propegated back to your kicad schematic, please
+select `Save Schematic` from the menu.
+
 
 ## TODO
 
