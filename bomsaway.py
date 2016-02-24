@@ -119,7 +119,7 @@ class ComponentTypeView(BoxLayout):
         self.comp_type_list.component_view.adapter.bind(on_selection_change=cb)
 
 
-class BomManagerApp(App):
+class BomsAwayApp(App):
     top_box = ObjectProperty(None)
     scrollbox = ObjectProperty(None)
     comp_list = ObjectProperty(None)
@@ -534,4 +534,4 @@ class BomManagerApp(App):
 
 
 if __name__ == '__main__':
-    BomManagerApp().run()
+    BomsAwayApp().run()
