@@ -366,10 +366,6 @@ class BomManagerApp(App):
         if not ct.has_valid_key_fields:
             raise Exception("Missing key fields (value / footprint)!")
 
-        # TODO: Wrap these guys up. Think about perhaps having a
-        # component manager class that encompases the datastore and
-        # component type wrappers?
-
         up = self.ds.lookup(ct)
 
         if up is None:
