@@ -55,6 +55,11 @@ upload to digikey/mouser/octopart/etc
 All changes can be saved back to KiCad Schematics
 
 
+## Screenshots
+![Component Selection](component_sel.png)
+
+![Duplicate Component Resolution](dup_screenshot.png)
+
 ## Notes
 
 ### This tool is opinionated!
@@ -112,4 +117,3 @@ This project uses sch.py from
 ## Contributing
 
 Contributions welcome (and wanted!), please send a PR.
-
