@@ -485,8 +485,7 @@ class BomManagerApp(App):
             if motionevent[0] < 50:
                 self.navdrawer.toggle_state()
         else:
-            # TODO: Fix this calculation, it isn't correct
-            if motionevent[0] > self.navdrawer.side_panel_width / 2:
+            if motionevent[0] > self.navdrawer.side_panel_width:
                 self.navdrawer.close_sidepanel()
 
     def on_load(self):
