@@ -72,6 +72,7 @@ not attempt to do any import or translation of other existing fields
 * Semantic versioning
 * Fix outstanding todo items in source
 * Add Unit tests
+* User Guide
 
 
 ## Planned Features
