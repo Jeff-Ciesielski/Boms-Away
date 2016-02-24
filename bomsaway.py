@@ -17,7 +17,7 @@ from kivy.factory import Factory
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.adapters.listadapter import ListAdapter
-from kivy.garden.NavigationDrawer import NavigationDrawer
+from kivy.garden.navigationdrawer import NavigationDrawer
 from kivy.core.window import Window
 from kivy.uix.accordion import Accordion, AccordionItem
 from kivy.uix.scrollview import ScrollView
