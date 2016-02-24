@@ -27,7 +27,7 @@ for re-use in future designs.
 
 ## Features
 
-* Self-curated component database -
+### Self-curated component database
 
 Simply enter a part's manufacturer,
 supplier, manufacturer PN, and supplier PN then click 'save to
@@ -36,7 +36,7 @@ footprint, so future uses can simply use the part lookup button to
 retrieve the information.  Multiple suppliers, manufacturers, and
 part numbers are supported.
 
-* Like-Part consolidation -
+### Like-Part consolidation
 
 Everybody miskeys from time to time, this feature detects (to the best
 of its ability) components that are the same, but simply have
@@ -45,19 +45,19 @@ into a single value selectable by the user.
 
 `*Only components that share a footprint are consolidated.`
 
-* CSV Bom Export -
+### CSV Bom Export
 
 Exports PCBNew style component agregate BOMs as CSV. Suitable for
 upload to digikey/mouser/octopart/etc
 
-* KiCad Backpropegation -
+### KiCad Backpropegation
 
 All changes can be saved back to KiCad Schematics
 
 
 ## Notes
 
-* This tool is opinionated!
+### This tool is opinionated!
 
 The tool has to store its information somewhere, so it uses kicad's
 custom component fields. Currently, the fields SPN, MPN, SPR, and MFR
@@ -66,7 +66,7 @@ automatically added to each component as it is accessed. The tool does
 not attempt to do any import or translation of other existing fields
 (field remapping could be added in a future update).
 
-* Schematic saves are not automatic!
+### Schematic saves are not automatic!
 
 If you would like data propegated back to your kicad schematic, please
 select `Save Schematic` from the menu.
@@ -82,16 +82,16 @@ select `Save Schematic` from the menu.
 
 ## Planned Features
 
-* Multi-supplier BOM export
+### Multi-supplier BOM export
 
 Allow exporting of <supplier>_bom.csv on a per vendor basis to allow
 ease of uploading/ordering
 
-* Octopart integration
+### Octopart integration
 
 Enable part price lookups and stock amount checking
 
-* Bom Price Breakdown View (after octopart)
+### Bom Price Breakdown View (after octopart)
 
 View overall prices / quantity ordered
 
