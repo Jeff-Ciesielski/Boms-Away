@@ -83,7 +83,7 @@ select `Save Schematic` from the menu.
 * Fix outstanding todo items in source
 * Add Unit tests
 * User Guide
-
+* Clean up user screens
 
 ## Planned Features
 
@@ -104,6 +104,7 @@ View overall prices / quantity ordered
 ## Feature wishlist
 
 * Part inventory accounting
+* Better UX :)
 
 ## License
 
