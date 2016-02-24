@@ -163,105 +163,6 @@ class BomManagerApp(App):
         self.type_view.lookup_button.disabled = False
         self.type_view.save_button.disabled = False
 
-    def update_datastore(self):
-
-        ct = self._current_type
-
-        # TODO: Implement get_or_create, this shit is bananas
-        # TODO: Clean up validation
-        # Check and update each field
-
-        val = (
-            self.ds.query(datastore.ComponentValue)
-            .filter(datastore.ComponentValue.value == ct.value)
-        ).first()
-
-        fp = (
-            self.ds.query(datastore.Footprint)
-            .filter(datastore.Footprint.name == ct.footprint)
-        ).first()
-
-        ds = (
-            self.ds.query(datastore.Datasheet)
-            .filter(datastore.Datasheet.url == ct.datasheet)
-        ).first()
-
-        mfr = (
-            self.ds.query(datastore.Manufacturer)
-            .filter(datastore.Manufacturer.name == ct.manufacturer)
-        ).first()
-
-        mpn = (
-            self.ds.query(datastore.ManufacturerPart)
-            .filter(datastore.ManufacturerPart.pn == ct.manufacturer_pn)
-        ).first()
-
-        spr = (
-            self.ds.query(datastore.Supplier)
-            .filter(datastore.Supplier.name == ct.supplier)
-        ).first()
-
-        spn = (
-            self.ds.query(datastore.SupplierPart)
-            .filter(datastore.SupplierPart.pn == ct.supplier_pn)
-        ).first()
-
-        if not val and len(ct.value.strip()):
-            val = datastore.ComponentValue(value=ct.value)
-            self.ds.add(val)
-
-        if not fp and len(ct.footprint.strip()):
-            fp = datastore.Footprint(name=ct.footprint)
-            self.ds.add(fp)
-
-        if not ds and len(ct.datasheet.strip()):
-            ds = datastore.Datasheet(url=ct.datasheet)
-            self.ds.add(ds)
-
-        if not mfr and len(ct.manufacturer.strip()):
-            mfr = datastore.Manufacturer(name=ct.manufacturer)
-            self.ds.add(mfr)
-
-        if not mpn and len(ct.manufacturer_pn.strip()):
-            mpn = datastore.ManufacturerPart(pn=ct.manufacturer_pn)
-            self.ds.add(mpn)
-
-        if not spr and len(ct.supplier.strip()):
-            spr = datastore.Supplier(name=ct.supplier)
-            self.ds.add(spr)
-
-        if not spn and len(ct.supplier_pn.strip()):
-            spn = datastore.SupplierPart(pn=ct.supplier_pn)
-            self.ds.add(spn)
-
-        # draw up associations
-        if spr and spn and not spn.supplier:
-            spn.supplier = spr
-
-        if mfr and mpn and not mpn.manufacturer:
-            mpn.manufacturer = mfr
-
-        if mpn and spn:
-            spn.manufacturer_part = mpn
-
-        if val and fp:
-            # check to see if there is a unique part listing
-            up = (
-                self.ds.query(datastore.UniquePart)
-                .filter(datastore.UniquePart.component_value == val,
-                        datastore.UniquePart.footprint == fp)
-            ).first()
-
-            if not up:
-                up = datastore.UniquePart(component_value=val,
-                                          footprint=fp)
-                self.ds.add(up)
-
-        if mpn:
-            mpn.unique_part = up
-
-        self.ds.commit()
-
     def save_component_type_changes(self, *args):
 
         if self._current_type is None:
@@ -469,17 +370,9 @@ class BomManagerApp(App):
         # component manager class that encompases the datastore and
         # component type wrappers?
 
-        val = (
-            self.ds.query(datastore.ComponentValue)
-            .filter(datastore.ComponentValue.value == ct.value)
-        ).first()
+        up = self.ds.lookup(ct)
 
-        fp = (
-            self.ds.query(datastore.Footprint)
-            .filter(datastore.Footprint.name == ct.footprint)
-        ).first()
-
-        if not val or not fp:
+        if up is None:
             content = BoxLayout(orientation='vertical')
             content.add_widget(Label(text="Component does not exist in Datastore"))
             content.add_widget(Button(text='OK',
@@ -491,14 +384,6 @@ class BomManagerApp(App):
                                 size_hint=(0.9, 0.9))
             self._popup.open()
             return
-
-            
-
-        up = (
-            self.ds.query(datastore.UniquePart)
-            .filter(datastore.UniquePart.component_value == val,
-                    datastore.UniquePart.footprint == fp)
-        ).first()
 
         if not up.manufacturer_pns.count():
             content = BoxLayout(orientation='vertical')
@@ -545,7 +430,6 @@ class BomManagerApp(App):
                     )
                     cb_map[btn_text] = (pn, s_pn)
 
-
         if len(cb_map) == 1:
             pn, s_pn = cb_map.values().pop()
             lookup_closure(pn, s_pn, None)()
@@ -565,7 +449,7 @@ class BomManagerApp(App):
 
     def do_datastore_update(self, *args):
         self.save_component_type_changes()
-        self.update_datastore()
+        self.ds.update(self._current_type)
 
     def build(self):
         global AppRoot
@@ -573,11 +457,7 @@ class BomManagerApp(App):
 
         self._init_config_dir()
 
-        datastore.initialize()
-        self.ds = datastore.get_session()
-
-        if self.ds is None:
-            raise Exception("could not get datastore session")
+        self.ds = datastore.Datastore()
 
         self.navdrawer = NavDrawer()
 
