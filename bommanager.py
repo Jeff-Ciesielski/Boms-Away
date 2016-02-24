@@ -24,9 +24,6 @@ from kivy.uix.scrollview import ScrollView
 
 import kicad_helpers as kch
 
-# TODO: Normalize all input schematic components to follow field
-# guidelines
-
 SidePanel_AppMenu = {
     'Load Schematic': ['on_load', None],
     'Save Schematic': ['on_save', None],
