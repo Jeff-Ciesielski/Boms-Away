@@ -53,83 +53,82 @@
                 text: "Component Types"
                 size_hint: (1.0, .05)
 
+            GridLayout:
+                cols: 2
+                Label:
+                    text: 'Quantity'
+                Label:
+                    id: qty_text_id
+                    text: ''
+                    multiline: False
+                    text_size: self.size
+                    halign: 'center'
+                    valign: 'middle'
+                Label:
+                    text: 'Refs'
+                Label:
+                    id: refs_text_id
+                    text: ''
+                    multiline: False
+                    text_size: self.size
+                    halign: 'center'
+                    valign: 'middle'
+                Label:
+                    text: 'Footprint'
+                Label:
+                    id: fp_text_id
+                    text: ''
+                    multiline: False
+                    text_size: self.size
+                    halign: 'center'
+                    valign: 'middle'
+                Label:
+                    text: 'Value'
+                Label:
+                    id: val_text_id
+                    text: ''
+                    multiline: False
+                Label:
+                    text: 'Datasheet'
+                TextInput:
+                    id: ds_text_id
+                    text: ''
+                    multiline: False
+                Label:
+                    text: 'Manufacturer'
+                TextInput:
+                    id: mfr_text_id
+                    text: ''
+                    multiline: False
+                Label:
+                    text: 'Manufacturer Part#'
+                TextInput:
+                    id: mfr_pn_text_id
+                    text: ''
+                    multiline: False
+                Label:
+                    text: 'Supplier'
+                TextInput:
+                    id: sup_text_id
+                    text: ''
+                    multiline: False
+                Label:
+                    text: 'Supplier Part#'
+                TextInput:
+                    id: sup_pn_text_id
+                    text: ''
+                    multiline: False
+                Button:
+                    id: save_button_id
+                    text: 'Save Part to Datastore'
+                    disabled: True
+                Button:
+                    id: lookup_button_id
+                    text: 'Part Lookup'
+                    disabled: True
+
             SelectableList:
                 id: comp_type_list
-        BoxLayout:
-            size_hint: (.382, 1.0)
-            orientation: 'vertical'
-            spacing: 1
-            Label:
-                text: 'Quantity'
-            Label:
-                id: qty_text_id
-                text: ''
-                multiline: False
-                text_size: self.size
-                halign: 'center'
-                valign: 'middle'
-            Label:
-                text: 'Refs'
-            Label:
-                id: refs_text_id
-                text: ''
-                multiline: False
-                text_size: self.size
-                halign: 'center'
-                valign: 'middle'
-            Label:
-                text: 'Footprint'
-            Label:
-                id: fp_text_id
-                text: ''
-                multiline: False
-                text_size: self.size
-                halign: 'center'
-                valign: 'middle'
-            Label:
-                text: 'Value'
-            Label:
-                id: val_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Datasheet'
-            TextInput:
-                id: ds_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Manufacturer'
-            TextInput:
-                id: mfr_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Manufacturer Part#'
-            TextInput:
-                id: mfr_pn_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Supplier'
-            TextInput:
-                id: sup_text_id
-                text: ''
-                multiline: False
-            Label:
-                text: 'Supplier Part#'
-            TextInput:
-                id: sup_pn_text_id
-                text: ''
-                multiline: False
-            Button:
-                id: save_button_id
-                text: 'Save Part to Datastore'
-                disabled: True
-            Button:
-                id: lookup_button_id
-                text: 'Part Lookup'
-                disabled: True
 
 <SidePanel>:
     orientation: 'vertical'
