@@ -23,7 +23,7 @@ for re-use in future designs.
 * [kivy](https://kivy.org) >= 1.9.0
 * kivy garden
 * navigationdrawer `garden install navigationdrawer`
-
+* sqlalchemy
 
 ## Features
 
