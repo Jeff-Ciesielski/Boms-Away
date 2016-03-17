@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-
 import os
 import csv
 
-import sch
-import datastore
+from boms_away import sch, datastore
+from boms_away import kicad_helpers as kch
 
 from kivy.app import App
 from kivy.uix.widget import Widget
@@ -22,7 +21,6 @@ from kivy.core.window import Window
 from kivy.uix.accordion import Accordion, AccordionItem
 from kivy.uix.scrollview import ScrollView
 
-import kicad_helpers as kch
 
 SidePanel_AppMenu = {
     'Load Schematic': ['on_load', None],
@@ -51,7 +49,6 @@ class NavDrawer(NavigationDrawer):
                 self.anim_to_state('closed')
             else:
                 self.state = 'closed'
-
 
 class MenuItem(Button):
     def __init__(self, **kwargs):
