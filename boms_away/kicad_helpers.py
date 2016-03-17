@@ -65,6 +65,15 @@ class ComponentWrapper(object):
 
             self._cmp.addField(f_data)
 
+    def set_field_visibility(self, field, visible=True):
+        f = self._get_field(field)
+        if visible:
+            vis = '0000'
+        else:
+            vis = '0001'
+
+        f['attributs'] = vis
+
     @property
     def has_valid_key_fields(self):
         if not len(self.footprint.strip()) or not len(self.value.strip()):
@@ -104,6 +113,7 @@ class ComponentWrapper(object):
     @datasheet.setter
     def datasheet(self, val):
         self._set_field_value('datasheet', val)
+        self.set_field_visibility('datasheet', False)
 
     @property
     def is_virtual(self):
