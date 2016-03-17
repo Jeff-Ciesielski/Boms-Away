@@ -1,6 +1,20 @@
 import sch
 import os
 
+
+def sanitized(f):
+    """
+    Removes newlines/tabs/carriage/returns to prevent breakages in schematics
+
+    Returns: Sanitized string
+    """
+
+    for v in ['\n', '\r', '\t']:
+        f = f.replace(v, '')
+
+    return f
+
+
 # TODO: Enumerate field values
 class ComponentWrapper(object):
 
@@ -32,7 +46,8 @@ class ComponentWrapper(object):
 
     def _set_field_value(self, field, value):
         f = self._get_field(field)
-        f['ref'] = '"{}"'.format(value)
+
+        f['ref'] = '"{}"'.format(sanitized(value))
 
     def _get_field_value(self, field):
         return self._get_field(field)['ref'].strip('"')
