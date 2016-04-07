@@ -13,7 +13,6 @@ class ComponentTypeView(wx.Panel):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-
         grid = wx.GridSizer(0, 2, 3, 3)
 
         self.lookup_button = wx.Button(self, 310, 'Part Lookup')
@@ -33,7 +32,7 @@ class ComponentTypeView(wx.Panel):
             (wx.TextCtrl(self, 305, ''), 0, wx.EXPAND),
             (wx.StaticText(self, -1, 'Manufacturer'), 0, wx.EXPAND),
             (wx.TextCtrl(self, 306, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'manufacturer PN'), 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Manufacturer PN'), 0, wx.EXPAND),
             (wx.TextCtrl(self, 307, ''), 0, wx.EXPAND),
             (wx.StaticText(self, -1, 'Supplier'), 0, wx.EXPAND),
             (wx.TextCtrl(self, 308, ''), 0, wx.EXPAND),
@@ -49,7 +48,7 @@ class ComponentTypeView(wx.Panel):
         fp_label = wx.StaticText(self, -1, 'Footprints', style=wx.ALIGN_CENTER_HORIZONTAL)
         fp_list = wx.ListBox(self, 330, style=wx.LB_SINGLE)
 
-        fpbox.Add(fp_label, 0, wx.ALIGN_CENTER_HORIZONTAL)
+        fpbox.Add(fp_label, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
         fpbox.Add(fp_list, 1, wx.EXPAND)
 
         # Create Component selector box
@@ -58,14 +57,14 @@ class ComponentTypeView(wx.Panel):
         comp_label = wx.StaticText(self, -1, 'Componenents', style=wx.ALIGN_CENTER_HORIZONTAL)
         comp_list = wx.ListBox(self, 331, style=wx.LB_SINGLE)
 
-        compbox.Add(comp_label,  0, wx.ALIGN_CENTER_HORIZONTAL)
+        compbox.Add(comp_label,  0, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
         compbox.Add(comp_list, 1, wx.EXPAND)
 
         # Lay out the fpbox and compbox side by side
         selbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        selbox.Add(fpbox, 0, wx.EXPAND)
-        selbox.Add(compbox, 0, wx.EXPAND)
+        selbox.Add(fpbox, 1, wx.EXPAND)
+        selbox.Add(compbox, 1, wx.EXPAND)
 
         # Perform final layout
         vbox.Add(grid, 1, wx.EXPAND | wx.ALL, 3)
