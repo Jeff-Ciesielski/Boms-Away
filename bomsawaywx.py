@@ -13,34 +13,22 @@ class ComponentTypeView(wx.Panel):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        grid = wx.GridSizer(0, 2, 3, 3)
+        self.grid = wx.GridSizer(0, 2, 3, 3)
 
         self.lookup_button = wx.Button(self, 310, 'Part Lookup')
         self.save_button = wx.Button(self, 311, 'Save Part to Datastore')
 
-        # Create the component detail grid
-        grid.AddMany([
-            (wx.StaticText(self, -1, 'Quantity'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 301, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'Refs'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 302, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'Footprint'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 303, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'Value'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 304, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'Datasheet'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 305, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'Manufacturer'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 306, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'Manufacturer PN'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 307, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'Supplier'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 308, ''), 0, wx.EXPAND),
-            (wx.StaticText(self, -1, 'Supplier PN'), 0, wx.EXPAND),
-            (wx.TextCtrl(self, 309, ''), 0, wx.EXPAND),
-            (self.lookup_button, 0, wx.EXPAND),
-            (self.save_button, 0, wx.EXPAND),
-        ])
+        self.qty_text = wx.TextCtrl(self, 301, '')
+        self.refs_text = wx.TextCtrl(self, 302, '')
+        self.fp_text = wx.TextCtrl(self, 303, '')
+        self.value_text = wx.TextCtrl(self, 304, '')
+        self.ds_text = wx.TextCtrl(self, 305, '')
+        self.mfr_text = wx.TextCtrl(self, 306, '')
+        self.mpn_text = wx.TextCtrl(self, 307, '')
+        self.spr_text = wx.TextCtrl(self, 308, '')
+        self.spn_text = wx.TextCtrl(self, 309, '')
+
+        self._populate_grid()
 
         # Create fooprint selector box
         fpbox = wx.BoxSizer(wx.VERTICAL)
@@ -52,7 +40,7 @@ class ComponentTypeView(wx.Panel):
         fpbox.Add(self.fp_list, 1, wx.EXPAND)
 
         self.fp_list.Bind(wx.EVT_LISTBOX, self.on_fp_list, id=wx.ID_ANY)
- 
+
         # Create Component selector box
         compbox = wx.BoxSizer(wx.VERTICAL)
 
@@ -62,7 +50,7 @@ class ComponentTypeView(wx.Panel):
         compbox.Add(comp_label,  0, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
         compbox.Add(self.comp_list, 1, wx.EXPAND)
         self.comp_list.Bind(wx.EVT_LISTBOX, self.on_comp_list, id=wx.ID_ANY)
- 
+
         # Lay out the fpbox and compbox side by side
         selbox = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -70,10 +58,39 @@ class ComponentTypeView(wx.Panel):
         selbox.Add(compbox, 1, wx.EXPAND)
 
         # Perform final layout
-        vbox.Add(grid, 1, wx.EXPAND | wx.ALL, 3)
+        vbox.Add(self.grid, 1, wx.EXPAND | wx.ALL, 3)
         vbox.Add(selbox, 3, wx.EXPAND | wx.ALL, 3)
 
         self.SetSizer(vbox)
+
+    def _populate_grid(self):
+
+        # Create text objects to be stored in grid
+
+        # Create the component detail grid
+        self.grid.AddMany([
+            (wx.StaticText(self, -1, 'Quantity'), 0, wx.EXPAND),
+            (self.qty_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Refs'), 0, wx.EXPAND),
+            (self.refs_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Footprint'), 0, wx.EXPAND),
+            (self.fp_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Value'), 0, wx.EXPAND),
+            (self.value_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Datasheet'), 0, wx.EXPAND),
+            (self.ds_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Manufacturer'), 0, wx.EXPAND),
+            (self.mfr_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Manufacturer PN'), 0, wx.EXPAND),
+            (self.mpn_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Supplier'), 0, wx.EXPAND),
+            (self.spr_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Supplier PN'), 0, wx.EXPAND),
+            (self.spn_text, 0, wx.EXPAND),
+            (self.lookup_button, 0, wx.EXPAND),
+            (self.save_button, 0, wx.EXPAND),
+        ])
+
 
     def on_fp_list(self, event):
         self.comp_list.Clear()
@@ -81,7 +98,20 @@ class ComponentTypeView(wx.Panel):
             [x for x in sorted(set(self.type_data[self.fp_list.GetStringSelection()].keys()))])
 
     def on_comp_list(self, event):
-        pass
+        fp = self.fp_list.GetStringSelection()
+        ct = self.comp_list.GetStringSelection()
+
+        comp = self.type_data[fp][ct]
+
+        self.qty_text.SetValue(str(len(comp)))
+        self.refs_text.SetValue(comp.refs)
+        self.fp_text.SetValue(comp.footprint)
+        self.value_text.SetValue(comp.value)
+        self.ds_text.SetValue(comp.datasheet)
+        self.mfr_text.SetValue(comp.manufacturer)
+        self.mpn_text.SetValue(comp.manufacturer_pn)
+        self.spr_text.SetValue(comp.supplier)
+        self.spn_text.SetValue(comp.supplier_pn)
 
     def _reset(self):
         self.comp_list.Clear()
@@ -176,9 +206,9 @@ class MainFrame(wx.Frame):
                     self.component_type_map[c.footprint] = {}
 
                 if c.value not in self.component_type_map[c.footprint]:
-                    self.component_type_map[c.footprint][c.value] = []
+                    self.component_type_map[c.footprint][c.value] = kch.ComponentTypeContainer()
 
-                self.component_type_map[c.footprint][c.value].append(c)
+                self.component_type_map[c.footprint][c.value].add(c)
 
         self.ctv.attach_data(self.component_type_map)
         self._current_type = None
