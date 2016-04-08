@@ -46,20 +46,23 @@ class ComponentTypeView(wx.Panel):
         fpbox = wx.BoxSizer(wx.VERTICAL)
 
         fp_label = wx.StaticText(self, -1, 'Footprints', style=wx.ALIGN_CENTER_HORIZONTAL)
-        fp_list = wx.ListBox(self, 330, style=wx.LB_SINGLE)
+        self.fp_list = wx.ListBox(self, 330, style=wx.LB_SINGLE)
 
         fpbox.Add(fp_label, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
-        fpbox.Add(fp_list, 1, wx.EXPAND)
+        fpbox.Add(self.fp_list, 1, wx.EXPAND)
 
+        self.fp_list.Bind(wx.EVT_LISTBOX, self.on_fp_list, id=wx.ID_ANY)
+ 
         # Create Component selector box
         compbox = wx.BoxSizer(wx.VERTICAL)
 
         comp_label = wx.StaticText(self, -1, 'Componenents', style=wx.ALIGN_CENTER_HORIZONTAL)
-        comp_list = wx.ListBox(self, 331, style=wx.LB_SINGLE)
+        self.comp_list = wx.ListBox(self, 331, style=wx.LB_SINGLE)
 
         compbox.Add(comp_label,  0, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
-        compbox.Add(comp_list, 1, wx.EXPAND)
-
+        compbox.Add(self.comp_list, 1, wx.EXPAND)
+        self.comp_list.Bind(wx.EVT_LISTBOX, self.on_comp_list, id=wx.ID_ANY)
+ 
         # Lay out the fpbox and compbox side by side
         selbox = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -72,8 +75,24 @@ class ComponentTypeView(wx.Panel):
 
         self.SetSizer(vbox)
 
-    def attach_data(self, type_data):
+    def on_fp_list(self, event):
+        self.comp_list.Clear()
+        map(self.comp_list.Append,
+            [x for x in sorted(set(self.type_data[self.fp_list.GetStringSelection()].keys()))])
+
+    def on_comp_list(self, event):
         pass
+
+    def _reset(self):
+        self.comp_list.Clear()
+        self.fp_list.Clear()
+
+    def attach_data(self, type_data):
+        self.type_data = type_data
+
+        map(self.fp_list.Append,
+            [x for x in sorted(set(type_data.keys()))])
+
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
@@ -86,9 +105,9 @@ class MainFrame(wx.Frame):
 
     def _do_layout(self):
         vbox = wx.BoxSizer(wx.VERTICAL)
-        ctv = ComponentTypeView(self, -1)
+        self.ctv = ComponentTypeView(self, -1)
 
-        vbox.Add(ctv, 1, wx.EXPAND | wx.ALL, 3)
+        vbox.Add(self.ctv, 1, wx.EXPAND | wx.ALL, 3)
 
         self.SetSizer(vbox)
 
@@ -118,15 +137,8 @@ class MainFrame(wx.Frame):
         self.component_type_map = {}
 
     def load(self, path):
-        self.dismiss_popup()
-
         if len(path) == 0:
             return
-
-        # Enable buttons if we have a live schematic
-        self.side_panel.save_button.disabled = False
-        self.side_panel.export_button.disabled = False
-        self.side_panel.consolidate_button.disabled = False
 
         # remove old schematic information
         self._reset()
@@ -159,16 +171,19 @@ class MainFrame(wx.Frame):
 
                 c.add_bom_fields()
 
-                if c.typeid not in self.component_type_map:
-                    self.component_type_map[c.typeid] = (
-                        kch.ComponentTypeContainer()
-                    )
-                self.component_type_map[c.typeid].add(c)
+                # TODO: Remove typeid, just map by footprint:>component
+                if c.footprint not in self.component_type_map:
+                    self.component_type_map[c.footprint] = {}
 
-        self.type_view.attach_data(self.component_type_map)
+                if c.value not in self.component_type_map[c.footprint]:
+                    self.component_type_map[c.footprint][c.value] = []
+
+                self.component_type_map[c.footprint][c.value].append(c)
+
+        self.ctv.attach_data(self.component_type_map)
         self._current_type = None
-        self.type_view.lookup_button.disabled = True
-        self.type_view.save_button.disabled = True
+        self.ctv.lookup_button.disabled = True
+        self.ctv.save_button.disabled = True
 
 
     def on_open(self, event):
