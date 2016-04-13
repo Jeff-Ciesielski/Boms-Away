@@ -68,6 +68,7 @@ class SupplierPart(Base):
     __tablename__ = 'supplier_part'
     id = Column(Integer, primary_key=True)
     pn = Column(String(64), nullable=False)
+    url = Column(String(1024), nullable=True)
     supplier_id = Column(Integer, ForeignKey('supplier.id'))
     supplier = relationship('Supplier')
     manufacturer_part_id = Column(Integer, ForeignKey('manufacturer_part.id'))
@@ -191,7 +192,7 @@ class Datastore(object):
             session.add(spr)
 
         if not spn and len(ct.supplier_pn.strip()):
-            spn = SupplierPart(pn=ct.supplier_pn)
+            spn = SupplierPart(pn=ct.supplier_pn, url=ct.supplier_url)
             session.add(spn)
 
         # draw up associations
