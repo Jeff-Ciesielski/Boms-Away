@@ -64,7 +64,6 @@ class ComponentTypeView(wx.Panel):
         self.SetSizer(vbox)
 
     def _populate_grid(self):
-
         # Create text objects to be stored in grid
 
         # Create the component detail grid
@@ -120,9 +119,31 @@ class ComponentTypeView(wx.Panel):
     def attach_data(self, type_data):
         self.type_data = type_data
 
+        self._reset()
+
         map(self.fp_list.Append,
             [x for x in sorted(set(type_data.keys()))])
 
+class UniquePartSelectorDialog(wx.Dialog):
+    def __init__(self, parent, id, title):
+        wx.Dialog.__init__(self, parent, id, title)
+
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        stline = wx.StaticText(self, 11, 'Duplicate Component values found!\n\nPlease select which format to follow:')
+        vbox.Add(stline, 1, wx.ALIGN_CENTER|wx.TOP, 45)
+        self.comp_list = wx.ListBox(self, 331, style=wx.LB_SINGLE)
+
+        vbox.Add(self.comp_list, 0, wx.ALIGN_CENTER)
+        self.SetSizer(vbox)
+        self.comp_list.Bind(wx.EVT_LISTBOX, self.on_selection, id=wx.ID_ANY)
+
+    def on_selection(self, event):
+        self.selection_text = self.comp_list.GetStringSelection()
+        self.selection_idx = self.comp_list.GetSelection()
+        self.Close()
+
+    def attach_data(self, data):
+        map(self.comp_list.Append, data)
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
@@ -161,10 +182,84 @@ class MainFrame(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.on_quit, id=105)
         self.Bind(wx.EVT_MENU, self.on_open, id=101)
+        self.Bind(wx.EVT_MENU, self.on_consolidate, id=201)
 
     def _reset(self):
         self.schematics = {}
         self.component_type_map = {}
+
+    def _consolidate(self):
+        """
+        Performs consolidation
+        """
+
+        def consolidation_closure(index, clo_cl, clo_popup):
+            def fn(*args):
+                sel = clo_cl.pop(index)
+
+                for rem in clo_cl:
+
+                    old_typeid = rem.typeid
+                    # Set all relevant fields
+                    rem.value = sel.value
+                    rem.manufacturer = sel.manufacturer
+                    rem.manufacturer_pn = sel.manufacturer_pn
+                    rem.supplier_pn = sel.supplier_pn
+                    rem.supplier = sel.supplier
+
+                    sel.extract_components(rem)
+                    self.component_type_map.pop(old_typeid, None)
+
+                self._update_data()
+                clo_popup.dismiss()
+            return fn
+
+        uniq = {}
+        dups = {}
+
+        # Find all duplicated components and put them into a dups map
+        for fp in self.component_type_map:
+            for ct in self.component_type_map[fp]:
+                cthsh = ct.upper().replace(' ', '')
+
+                if cthsh in uniq:
+                    if cthsh not in dups:
+                        dups[cthsh] = [uniq[cthsh]]
+
+                    dups[cthsh].append(self.component_type_map[fp][ct])
+                else:
+                    uniq[cthsh] = self.component_type_map[fp][ct]
+
+        for d, cl in dups.items():
+
+            _popup = UniquePartSelectorDialog(self,
+                                              wx.ID_ANY,
+                                              'Duplicate part value')
+
+            _popup.attach_data([x.value for x in cl])
+            _popup.ShowModal()
+
+
+            sel = cl.pop(_popup.selection_idx)
+
+            for rem in cl:
+                old_fp = rem.footprint
+                old_val = rem.value
+
+                # Set all relevant fields
+                rem.value = sel.value
+                rem.manufacturer = sel.manufacturer
+                rem.manufacturer_pn = sel.manufacturer_pn
+                rem.supplier_pn = sel.supplier_pn
+                rem.supplier = sel.supplier
+
+                sel.extract_components(rem)
+                del self.component_type_map[old_fp][old_val]
+
+            self.ctv.attach_data(self.component_type_map)
+
+            _popup.Destroy()
+
 
     def load(self, path):
         if len(path) == 0:
@@ -201,7 +296,6 @@ class MainFrame(wx.Frame):
 
                 c.add_bom_fields()
 
-                # TODO: Remove typeid, just map by footprint:>component
                 if c.footprint not in self.component_type_map:
                     self.component_type_map[c.footprint] = {}
 
@@ -215,6 +309,8 @@ class MainFrame(wx.Frame):
         self.ctv.lookup_button.disabled = True
         self.ctv.save_button.disabled = True
 
+    def on_consolidate(self, event):
+        self._consolidate()
 
     def on_open(self, event):
         """
