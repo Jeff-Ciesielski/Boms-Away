@@ -66,6 +66,7 @@ class ComponentWrapper(object):
             "MPN",
             "SPR",
             "SPN",
+	    "SPURL",
         ]
 
         for f in _fields:
@@ -167,6 +168,14 @@ class ComponentWrapper(object):
     @supplier_pn.setter
     def supplier_pn(self, pn):
         self._set_field_value('SPN', pn)
+
+    @property
+    def supplier_url(self):
+        return self._get_field_value('SPURL')
+
+    @supplier_url.setter
+    def supplier_url(self, url):
+        self._set_field_value('SPURL', url)
 
     def __str__(self):
         return '\n'.join([
@@ -271,6 +280,15 @@ class ComponentTypeContainer(object):
     def supplier_pn(self, pn):
         for c in self._components:
             c.supplier_pn = pn
+
+    @property
+    def supplier_url(self):
+        return self._components[0].supplier_url
+
+    @supplier_url.setter
+    def supplier_url(self, url):
+        for c in self._components:
+            c.supplier_url = url
 
     def __str__(self):
         return '\n'.join([

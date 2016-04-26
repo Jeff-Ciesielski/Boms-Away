@@ -152,6 +152,7 @@ class BomsAwayApp(App):
         self.type_view.mfr_pn_text.text = ct.manufacturer_pn
         self.type_view.sup_text.text = ct.supplier
         self.type_view.sup_pn_text.text = ct.supplier_pn
+	self.type_view.sup_url_text.text = ct.supplier_url
 
         # Enable the part lookup button
         self.type_view.lookup_button.disabled = False
@@ -170,6 +171,7 @@ class BomsAwayApp(App):
         ct.manufacturer_pn = self.type_view.mfr_pn_text.text
         ct.supplier = self.type_view.sup_text.text
         ct.supplier_pn = self.type_view.sup_pn_text.text
+	ct.supplier_url = self.type_view.sup_url_text.text
 
     def dismiss_popup(self, *args):
         self._popup.dismiss()
@@ -195,7 +197,7 @@ class BomsAwayApp(App):
             wrt = csv.writer(csvfile)
 
             wrt.writerow(['Refs', 'Value', 'Footprint',
-                          'QTY', 'MFR', 'MPN', 'SPR', 'SPN'])
+                          'QTY', 'MFR', 'MPN', 'SPR', 'SPN', 'SPURL'])
 
             for ctype in sorted(self.component_type_map):
                 ctcont = self.component_type_map[ctype]
@@ -208,6 +210,7 @@ class BomsAwayApp(App):
                     ctcont.manufacturer_pn,
                     ctcont.supplier,
                     ctcont.supplier_pn,
+                    ctcont.supplier_url,
                 ])
 
         self.dismiss_popup()
@@ -299,6 +302,7 @@ class BomsAwayApp(App):
                     rem.manufacturer = sel.manufacturer
                     rem.manufacturer_pn = sel.manufacturer_pn
                     rem.supplier_pn = sel.supplier_pn
+                    rem.supplier_url = sel.supplier_url
                     rem.supplier = sel.supplier
 
                     sel.extract_components(rem)
@@ -397,6 +401,7 @@ class BomsAwayApp(App):
                 if clo_spn:
                     self.type_view.sup_text.text = clo_spn.supplier.name
                     self.type_view.sup_pn_text.text = clo_spn.pn
+                    self.type_view.sup_url_text.text = clo_spn.url
 
                 if clo_popup:
                     clo_popup.dismiss()

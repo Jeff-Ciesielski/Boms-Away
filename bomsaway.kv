@@ -30,6 +30,7 @@
     mfr_pn_text: mfr_pn_text_id
     sup_text: sup_text_id
     sup_pn_text: sup_pn_text_id
+    sup_url_text: sup_url_text_id
     lookup_button: lookup_button_id
     save_button: save_button_id
     BoxLayout:
@@ -116,6 +117,12 @@
                     text: 'Supplier Part#'
                 TextInput:
                     id: sup_pn_text_id
+                    text: ''
+                    multiline: False
+                Label:
+                    text: 'Supplier Url'
+                TextInput:
+                    id: sup_url_text_id
                     text: ''
                     multiline: False
                 Button:
