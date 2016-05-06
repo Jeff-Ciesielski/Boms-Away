@@ -18,15 +18,20 @@ class ComponentTypeView(wx.Panel):
         self.lookup_button = wx.Button(self, 310, 'Part Lookup')
         self.save_button = wx.Button(self, 311, 'Save Part to Datastore')
 
-        self.qty_text = wx.TextCtrl(self, 301, '')
-        self.refs_text = wx.TextCtrl(self, 302, '')
-        self.fp_text = wx.TextCtrl(self, 303, '')
+        self.qty_text = wx.TextCtrl(self, 301, '', style=wx.TE_READONLY)
+        self.refs_text = wx.TextCtrl(self, 302, '', style=wx.TE_READONLY)
+        self.fp_text = wx.TextCtrl(self, 303, '', style=wx.TE_READONLY)
         self.value_text = wx.TextCtrl(self, 304, '')
         self.ds_text = wx.TextCtrl(self, 305, '')
         self.mfr_text = wx.TextCtrl(self, 306, '')
         self.mpn_text = wx.TextCtrl(self, 307, '')
         self.spr_text = wx.TextCtrl(self, 308, '')
         self.spn_text = wx.TextCtrl(self, 309, '')
+
+        # Set the background color of the read only controls to
+        # slightly darker to differentiate them
+        for ctrl in (self.qty_text, self.refs_text, self.fp_text):
+            ctrl.SetBackgroundColour(wx.ColourDatabase().Find('Light Grey'))
 
         self._populate_grid()
 
