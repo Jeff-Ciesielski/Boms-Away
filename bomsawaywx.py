@@ -335,6 +335,12 @@ class MainFrame(wx.Frame):
         #self.save_component_type_changes()
         exit(0)
 
+    def on_save(self, event):
+        self.save_component_type_changes()
+        for name, schematic in self.schematics.items():
+            schematic.save()
+
+
 class BomsAwayApp(wx.App):
     def OnInit(self):
         frame = MainFrame(None, -1, 'Boms-Away!')
