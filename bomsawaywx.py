@@ -132,6 +132,8 @@ class ComponentTypeView(wx.Panel):
 class UniquePartSelectorDialog(wx.Dialog):
     def __init__(self, parent, id, title):
         wx.Dialog.__init__(self, parent, id, title)
+        self.selection_idx = None
+        self.selection_text = None
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         stline = wx.StaticText(self, 11, 'Duplicate Component values found!\n\nPlease select which format to follow:')
@@ -244,6 +246,9 @@ class MainFrame(wx.Frame):
             _popup.attach_data([x.value for x in cl])
             _popup.ShowModal()
 
+            # If the user didn't select anything, just move on
+            if not _popup.selection_idx:
+                continue
 
             sel = cl.pop(_popup.selection_idx)
 
@@ -323,7 +328,8 @@ class MainFrame(wx.Frame):
         """
         #self.save_component_type_changes()
         openFileDialog = wx.FileDialog(self, "Open KiCad Schematic", "", "",
-                                       "Kicad Schematics (*.sch)|*.sch", wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+                                       "Kicad Schematics (*.sch)|*.sch",
+                                       wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 
         if openFileDialog.ShowModal() == wx.ID_CANCEL:
             return
