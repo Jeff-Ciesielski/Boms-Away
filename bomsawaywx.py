@@ -219,28 +219,6 @@ class MainFrame(wx.Frame):
         """
         Performs consolidation
         """
-
-        def consolidation_closure(index, clo_cl, clo_popup):
-            def fn(*args):
-                sel = clo_cl.pop(index)
-
-                for rem in clo_cl:
-
-                    old_typeid = rem.typeid
-                    # Set all relevant fields
-                    rem.value = sel.value
-                    rem.manufacturer = sel.manufacturer
-                    rem.manufacturer_pn = sel.manufacturer_pn
-                    rem.supplier_pn = sel.supplier_pn
-                    rem.supplier = sel.supplier
-
-                    sel.extract_components(rem)
-                    self.component_type_map.pop(old_typeid, None)
-
-                self._update_data()
-                clo_popup.dismiss()
-            return fn
-
         uniq = {}
         dups = {}
 
