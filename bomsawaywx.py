@@ -13,6 +13,7 @@ class ComponentTypeView(wx.Panel):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
 
+        self._current_type = None
         self.grid = wx.GridSizer(0, 2, 3, 3)
 
         self.lookup_button = wx.Button(self, 310, 'Part Lookup')
@@ -95,13 +96,29 @@ class ComponentTypeView(wx.Panel):
             (self.save_button, 0, wx.EXPAND),
         ])
 
+    def save_component_type_changes(self):
+        comp = self._current_type
+
+        if not comp:
+            return
+
+        comp.value = self.value_text.GetValue()
+        comp.datasheet = self.ds_text.GetValue()
+        comp.manufacturer = self.mfr_text.GetValue()
+        comp.manufacturer_pn = self.mpn_text.GetValue()
+        comp.supplier = self.spr_text.GetValue()
+        comp.supplier_pn = self.spn_text.GetValue()
 
     def on_fp_list(self, event):
+        self.save_component_type_changes()
         self.comp_list.Clear()
+        self._current_type = None
+
         map(self.comp_list.Append,
             [x for x in sorted(set(self.type_data[self.fp_list.GetStringSelection()].keys()))])
 
     def on_comp_list(self, event):
+        self.save_component_type_changes()
         fp = self.fp_list.GetStringSelection()
         ct = self.comp_list.GetStringSelection()
 
@@ -117,9 +134,12 @@ class ComponentTypeView(wx.Panel):
         self.spr_text.SetValue(comp.supplier)
         self.spn_text.SetValue(comp.supplier_pn)
 
+        self._current_type = comp
+
     def _reset(self):
         self.comp_list.Clear()
         self.fp_list.Clear()
+        self._current_type = None
 
     def attach_data(self, type_data):
         self.type_data = type_data
@@ -289,6 +309,7 @@ class MainFrame(wx.Frame):
         )
 
         # Recursively walks sheets to locate nested subschematics
+        # TODO: re-work this to return values instead of passing them byref
         kch.walk_sheets(base_dir, self.schematics[top_name].sheets, self.schematics)
 
         for name, schematic in self.schematics.items():
@@ -347,7 +368,7 @@ class MainFrame(wx.Frame):
         exit(0)
 
     def on_save(self, event):
-        self.save_component_type_changes()
+        self.ctv.save_component_type_changes()
         for name, schematic in self.schematics.items():
             schematic.save()
 
