@@ -1,5 +1,6 @@
 # BOMs Away! - BOM/Component manager for KiCad
 
+
 IMO, KiCad is one of the best EDA tools out there, with just one major
 problem: Bill of Materials management is rough. If you make more than
 1 board a year, you probably know how frustrating it can be to get
@@ -17,13 +18,32 @@ allowing for faster, easier data entry, and to provide a part database
 for re-use in future designs.
 
 
+## IMPORTANT!!!
+
+After some feedback from users, I've ported BomsAway to wxPython. All
+existing functionality should be intact, however, I've decided to
+leave the kivy version around for just a little while so that any bugs
+can get worked out before I pull the rug out.  Please let me know of
+any bugs ASAP and I'll get them fixed.
+
+To use the new version:
+Install wxPython, either via pip, or the dedicated installer (see the
+requirements section).
+
+Launch the new version (bomsawaywx.py)
+
+Support for Kivy will be ripped out at the beginning of July.
+
 ## Requirements
 
 * python 2.7
+* sqlalchemy
+* wxPython (pip install should work on most platforms, otherwise, see [wxPython.org](http://wxpython.org/download.php)
+
+Deprecated:
 * [kivy](https://kivy.org) >= 1.9.0
 * kivy garden
 * navigationdrawer `garden install navigationdrawer`
-* sqlalchemy
 
 ## Features
 
