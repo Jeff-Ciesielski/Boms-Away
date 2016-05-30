@@ -6,13 +6,36 @@ import wx
 from boms_away import sch, datastore
 from boms_away import kicad_helpers as kch
 
+class DBPartSelectorDialog(wx.Dialog):
+    def __init__(self, parent, id, title):
+        wx.Dialog.__init__(self, parent, id, title)
+        self.selection_idx = None
+        self.selection_text = None
+
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        stline = wx.StaticText(self, 11, 'Please select from the following components')
+        vbox.Add(stline, 0, wx.ALIGN_CENTER|wx.TOP)
+        self.comp_list = wx.ListBox(self, 331, style=wx.LB_SINGLE)
+
+        vbox.Add(self.comp_list, 1, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
+        self.SetSizer(vbox)
+        self.comp_list.Bind(wx.EVT_LISTBOX, self.on_selection, id=wx.ID_ANY)
+
+    def on_selection(self, event):
+        self.selection_text = self.comp_list.GetStringSelection()
+        self.selection_idx = self.comp_list.GetSelection()
+        self.Close()
+
+    def attach_data(self, data):
+        map(self.comp_list.Append, data)
+
 
 class ComponentTypeView(wx.Panel):
     def __init__(self, parent, id):
         super(ComponentTypeView, self).__init__(parent, id, wx.DefaultPosition)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
-
+        self.parent = parent
         self._current_type = None
         self.grid = wx.GridSizer(0, 2, 3, 3)
 
@@ -28,6 +51,10 @@ class ComponentTypeView(wx.Panel):
         self.mpn_text = wx.TextCtrl(self, 307, '')
         self.spr_text = wx.TextCtrl(self, 308, '')
         self.spn_text = wx.TextCtrl(self, 309, '')
+
+        # Bind the save and lookup component buttons
+        self.save_button.Bind(wx.EVT_BUTTON, self.on_save_to_datastore, id=wx.ID_ANY)
+        self.lookup_button.Bind(wx.EVT_BUTTON, self.on_lookup_component, id=wx.ID_ANY)
 
         # Set the background color of the read only controls to
         # slightly darker to differentiate them
@@ -97,17 +124,101 @@ class ComponentTypeView(wx.Panel):
         ])
 
     def save_component_type_changes(self):
-        comp = self._current_type
 
-        if not comp:
+        if not self._current_type:
             return
 
-        comp.value = self.value_text.GetValue()
-        comp.datasheet = self.ds_text.GetValue()
-        comp.manufacturer = self.mfr_text.GetValue()
-        comp.manufacturer_pn = self.mpn_text.GetValue()
-        comp.supplier = self.spr_text.GetValue()
-        comp.supplier_pn = self.spn_text.GetValue()
+        self._current_type.value = self.value_text.GetValue()
+        self._current_type.datasheet = self.ds_text.GetValue()
+        self._current_type.manufacturer = self.mfr_text.GetValue()
+        self._current_type.manufacturer_pn = self.mpn_text.GetValue()
+        self._current_type.supplier = self.spr_text.GetValue()
+        self._current_type.supplier_pn = self.spn_text.GetValue()
+
+    def on_lookup_component(self, event):
+        ct = self._current_type
+
+        if not ct:
+            return
+
+        if not ct.has_valid_key_fields:
+            raise Exception("Missing key fields (value / footprint)!")
+
+        up = self.parent.ds.lookup(ct)
+
+        if up is None:
+            dlg = wx.MessageDialog(parent,
+                                   "Component does not exist in Datastore",
+                                   "No Results Found",
+                                   wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        if not up.manufacturer_pns.count():
+            dlg = wx.MessageDialog(parent,
+                                   "No suitable parts found in Datastore",
+                                   "No Results Found",
+                                   wx.OK | wx.ICON_INFORMATION)
+            return
+
+        selections = {}
+
+
+        for pn in up.manufacturer_pns:
+            print pn
+            if not pn.supplier_parts:
+                print "no known suppliers"
+                sel_txt = '{} (No Known Suppliers)'.format(
+                    pn.pn
+                )
+                selections[sel_txt] = (pn, None)
+
+            else:
+                for s_pn in pn.supplier_parts:
+                    print "suppliers:", s_pn.supplier.name
+                    sel_text = '{} {} @ {}[{}]'.format(
+                        pn.manufacturer.name,
+                        pn.pn,
+                        s_pn.supplier.name,
+                        s_pn.pn
+                    )
+                    selections[sel_text] = (pn, s_pn)
+
+        def _set_pn_values(mpn,spn):
+            if mpn:
+                self.mfr_text.SetValue(mpn.manufacturer.name)
+                self.mpn_text.SetValue(mpn.pn)
+            if spn:
+                self.spr_text.SetValue(spn.supplier.name)
+                self.spn_text.SetValue(spn.pn)
+
+
+        if len(selections) == 1:
+            mpn, spn = selections.values().pop()
+            _set_pn_values(mpn,spn)
+        else:
+            _dbps = DBPartSelectorDialog(self,
+                                         wx.ID_ANY,
+                                         'DB Part Selection')
+            _dbps.attach_data(selections.keys())
+            _dbps.ShowModal()
+
+            if not _dbps.selection_text:
+                return
+
+            mpn, spn = selections[_dbps.selection_text]
+            _set_pn_values(mpn,spn)
+
+    def on_save_to_datastore(self, event):
+
+        self.save_component_type_changes()
+        if not self._current_type:
+            return
+
+        # TODO: I don't like parent walking...we should inject this
+        # dependency somewhere
+        self.parent.ds.update(self._current_type)
 
     def on_fp_list(self, event):
         self.save_component_type_changes()
@@ -180,6 +291,8 @@ class MainFrame(wx.Frame):
         self.Centre()
 
         self._reset()
+
+        self.ds = datastore.Datastore()
 
     def _do_layout(self):
         vbox = wx.BoxSizer(wx.VERTICAL)
