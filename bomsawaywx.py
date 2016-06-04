@@ -324,6 +324,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_open, id=101)
         self.Bind(wx.EVT_MENU, self.on_consolidate, id=201)
         self.Bind(wx.EVT_MENU, self.on_export, id=103)
+        self.Bind(wx.EVT_MENU, self.on_save, id=102)
 
     def _reset(self):
         self.schematics = {}
@@ -488,10 +489,13 @@ class MainFrame(wx.Frame):
         """
         Quits the application
         """
-        #self.save_component_type_changes()
+        self.save_component_type_changes()
         exit(0)
 
     def on_save(self, event):
+        """
+        Saves the schematics
+        """
         self.ctv.save_component_type_changes()
         for name, schematic in self.schematics.items():
             schematic.save()
