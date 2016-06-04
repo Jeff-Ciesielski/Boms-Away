@@ -360,7 +360,7 @@ class MainFrame(wx.Frame):
             _popup.ShowModal()
 
             # If the user didn't select anything, just move on
-            if not _popup.selection_idx:
+            if _popup.selection_idx is None:
                 continue
 
             sel = cl.pop(_popup.selection_idx)
@@ -376,6 +376,7 @@ class MainFrame(wx.Frame):
                 rem.supplier_pn = sel.supplier_pn
                 rem.supplier = sel.supplier
 
+                print sel
                 sel.extract_components(rem)
                 del self.component_type_map[old_fp][old_val]
 
