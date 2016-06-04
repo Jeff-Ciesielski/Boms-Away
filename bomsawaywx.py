@@ -323,6 +323,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_quit, id=105)
         self.Bind(wx.EVT_MENU, self.on_open, id=101)
         self.Bind(wx.EVT_MENU, self.on_consolidate, id=201)
+        self.Bind(wx.EVT_MENU, self.on_export, id=103)
 
     def _reset(self):
         self.schematics = {}
@@ -439,17 +440,49 @@ class MainFrame(wx.Frame):
         Recursively loads a KiCad schematic and all subsheets
         """
         #self.save_component_type_changes()
-        openFileDialog = wx.FileDialog(self, "Open KiCad Schematic", "", "",
-                                       "Kicad Schematics (*.sch)|*.sch",
-                                       wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        open_dialog = wx.FileDialog(self, "Open KiCad Schematic", "", "",
+                                         "Kicad Schematics (*.sch)|*.sch",
+                                         wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 
-        if openFileDialog.ShowModal() == wx.ID_CANCEL:
+        if open_dialog.ShowModal() == wx.ID_CANCEL:
             return
 
         # Load Chosen Schematic
-        print "opening File:", openFileDialog.GetPath()
+        print "opening File:", open_dialog.GetPath()
 
-        self.load(openFileDialog.GetPath())
+        self.load(open_dialog.GetPath())
+
+    def on_export(self, event):
+        """
+        Gets a file path via popup, then exports content
+        """
+
+        export_dialog = wx.FileDialog(self, "Export to CSV", "", "",
+                                      "CSV Files (*.csv)|*.csv",
+                                      wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+
+        if export_dialog.ShowModal() == wx.ID_CANCEL:
+            return
+
+        with open(export_dialog.GetPath(), 'w') as csvfile:
+            wrt = csv.writer(csvfile)
+
+            wrt.writerow(['Refs', 'Value', 'Footprint',
+                          'QTY', 'MFR', 'MPN', 'SPR', 'SPN'])
+
+            for fp in sorted(self.component_type_map):
+                for val in sorted(self.component_type_map[fp]):
+                    ctcont = self.component_type_map[fp][val]
+                    wrt.writerow([
+                        ctcont.refs,
+                        ctcont.value,
+                        ctcont.footprint,
+                        len(ctcont),
+                        ctcont.manufacturer,
+                        ctcont.manufacturer_pn,
+                        ctcont.supplier,
+                        ctcont.supplier_pn,
+                    ])
 
     def on_quit(self, event):
         """
