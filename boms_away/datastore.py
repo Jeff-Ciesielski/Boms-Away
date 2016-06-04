@@ -80,9 +80,17 @@ class Datastore(object):
         self._initialized = False
         self._eng = None
 
-        datastore_path = os.path.join(
+        datastore_dir = os.path.join(
             os.path.expanduser("~"),
             '.kicadbommgr.d',
+        )
+
+        # Create the kicad bom manager folder if it doesn't already exist
+        if not os.path.exists(datastore_dir):
+            os.makedirs(datastore_dir)
+
+        datastore_path = os.path.join(
+            datastore_dir,
             'bommgr.db'
         )
 

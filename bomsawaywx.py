@@ -147,7 +147,7 @@ class ComponentTypeView(wx.Panel):
         up = self.parent.ds.lookup(ct)
 
         if up is None:
-            dlg = wx.MessageDialog(parent,
+            dlg = wx.MessageDialog(self.parent,
                                    "Component does not exist in Datastore",
                                    "No Results Found",
                                    wx.OK | wx.ICON_INFORMATION)
