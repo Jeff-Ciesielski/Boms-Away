@@ -17,23 +17,6 @@ who choose to use Kicad for their layout and schematic capture needs,
 allowing for faster, easier data entry, and to provide a part database
 for re-use in future designs.
 
-
-## IMPORTANT!!!
-
-After some feedback from users, I've ported BomsAway to wxPython. All
-existing functionality should be intact, however, I've decided to
-leave the kivy version around for just a little while so that any bugs
-can get worked out before I pull the rug out.  Please let me know of
-any bugs ASAP and I'll get them fixed.
-
-To use the new version:
-Install wxPython, either via pip, or the dedicated installer (see the
-requirements section).
-
-Launch the new version (bomsawaywx.py)
-
-Support for Kivy will be ripped out at the beginning of July.
-
 ## Requirements
 
 * python 2.7
@@ -70,7 +53,7 @@ into a single value selectable by the user.
 Exports PCBNew style component agregate BOMs as CSV. Suitable for
 upload to digikey/mouser/octopart/etc
 
-### KiCad Backpropegation
+### KiCad Backpropagation
 
 All changes can be saved back to KiCad Schematics
 
@@ -96,10 +79,18 @@ not attempt to do any import or translation of other existing fields
 If you would like data propegated back to your kicad schematic, please
 select `Save Schematic` from the menu.
 
+## Changes
+
+### 8/11/16
+* Removed old Kivy based version
+* Moved datastore/config location to ~/.bomsaway.d (Note: Existing
+  databases will be automatically migrated)
+* Added Recent File Functionality
+* Misc bugfixes
 
 ## TODO
 
-* Semantic versioning
+* Semantic versioning + About page
 * Fix outstanding todo items in source
 * Add Unit tests
 * User Guide
