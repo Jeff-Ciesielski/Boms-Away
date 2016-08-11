@@ -1,6 +1,7 @@
 #!/usr/bin/env pythonw
 import os
 import csv
+import shutil
 
 import wx
 from boms_away import sch, datastore
@@ -290,13 +291,28 @@ class UniquePartSelectorDialog(wx.Dialog):
 
 class MainFrame(wx.Frame):
 
+    config_dir = os.path.join(
+        os.path.expanduser("~"),
+        '.bomsaway.d',
+    )
+
+    _legacy_dir = os.path.join(
+        os.path.expanduser("~"),
+        '.kicadbommgr.d',
+    )
+    config_file = os.path.join(
+        config_dir,
+        'BOMSAway.conf'
+    )
+    datastore_file = os.path.join(
+        config_dir,
+        'bommgr.db'
+    )
+
     def __init__(self, parent, id, title):
         super(MainFrame, self).__init__(parent, id, title, wx.DefaultPosition, wx.Size(800, 600))
 
-        self.filehistory = wx.FileHistory(8)
-        self.config = wx.Config("BOMsAway",
-                                style=wx.CONFIG_USE_LOCAL_FILE)
-        self.filehistory.Load(self.config)
+        self._load_config()
 
         self._create_menu()
         self._do_layout()
@@ -304,7 +320,23 @@ class MainFrame(wx.Frame):
 
         self._reset()
 
-        self.ds = datastore.Datastore()
+        self.ds = datastore.Datastore(self.datastore_file)
+
+    def _load_config(self):
+        # Handle legacy file location
+        if os.path.exists(self._legacy_dir):
+            print "Migrating config from legacy location"
+            shutil.move(self._legacy_dir, self.config_dir)
+
+        # Create the kicad bom manager folder if it doesn't already exist
+        if not os.path.exists(self.config_dir):
+            os.makedirs(self.config_dir)
+
+        self.filehistory = wx.FileHistory(8)
+        self.config = wx.Config("BOMsAway",
+                                localFilename=self.config_file,
+                                style=wx.CONFIG_USE_LOCAL_FILE)
+        self.filehistory.Load(self.config)
 
     def _do_layout(self):
         vbox = wx.BoxSizer(wx.VERTICAL)
