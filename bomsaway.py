@@ -490,7 +490,7 @@ class MainFrame(wx.Frame):
         """
         Quits the application
         """
-        self.save_component_type_changes()
+        self.ctv.save_component_type_changes()
         exit(0)
 
     def on_save(self, event):
