@@ -6,6 +6,7 @@ import wx
 from boms_away import sch, datastore
 from boms_away import kicad_helpers as kch
 
+
 class DBPartSelectorDialog(wx.Dialog):
     def __init__(self, parent, id, title):
         wx.Dialog.__init__(self, parent, id, title)
@@ -288,8 +289,15 @@ class UniquePartSelectorDialog(wx.Dialog):
         map(self.comp_list.Append, data)
 
 class MainFrame(wx.Frame):
+
     def __init__(self, parent, id, title):
         super(MainFrame, self).__init__(parent, id, title, wx.DefaultPosition, wx.Size(800, 600))
+
+        self.filehistory = wx.FileHistory(8)
+        self.config = wx.Config("BOMsAway",
+                                style=wx.CONFIG_USE_LOCAL_FILE)
+        self.filehistory.Load(self.config)
+
         self._create_menu()
         self._do_layout()
         self.Centre()
@@ -311,11 +319,21 @@ class MainFrame(wx.Frame):
         file = wx.Menu()
         edit = wx.Menu()
         help = wx.Menu()
-        file.Append(101, '&Open', 'Open a schematic')
-        file.Append(102, '&Save', 'Save the schematic')
+
+        file.Append(wx.ID_OPEN, '&Open', 'Open a schematic')
+        file.Append(wx.ID_SAVE, '&Save', 'Save the schematic')
         file.AppendSeparator()
         file.Append(103, '&Export BOM as CSV', 'Export the BOM as CSV')
         file.AppendSeparator()
+
+        # Create a new submenu for recent files
+        recent = wx.Menu()
+
+        file.AppendSubMenu(recent, 'Recent')
+        self.filehistory.UseMenu(recent)
+        self.filehistory.AddFilesToMenu()
+        file.AppendSeparator()
+
         quit = wx.MenuItem(file, 105, '&Quit\tCtrl+Q', 'Quit the Application')
         file.AppendItem(quit)
         edit.Append(201, 'Consolidate Components', 'Consolidate duplicated components')
@@ -325,10 +343,12 @@ class MainFrame(wx.Frame):
         self.SetMenuBar(menubar)
 
         self.Bind(wx.EVT_MENU, self.on_quit, id=105)
-        self.Bind(wx.EVT_MENU, self.on_open, id=101)
+        self.Bind(wx.EVT_MENU, self.on_open, id=wx.ID_OPEN)
         self.Bind(wx.EVT_MENU, self.on_consolidate, id=201)
         self.Bind(wx.EVT_MENU, self.on_export, id=103)
-        self.Bind(wx.EVT_MENU, self.on_save, id=102)
+        self.Bind(wx.EVT_MENU, self.on_save, id=wx.ID_SAVE)
+        self.Bind(wx.EVT_MENU_RANGE, self.on_file_history,
+                  id=wx.ID_FILE1, id2=wx.ID_FILE9)
 
     def _reset(self):
         self.schematics = {}
@@ -441,6 +461,16 @@ class MainFrame(wx.Frame):
     def on_consolidate(self, event):
         self._consolidate()
 
+
+    def on_file_history(self, event):
+        """
+        Handles opening files from the recent file history
+        """
+        fileNum = event.GetId() - wx.ID_FILE1
+        path = self.filehistory.GetHistoryFile(fileNum)
+        self.filehistory.AddFileToHistory(path)  # move up the list
+        self.load(path)
+
     def on_open(self, event):
         """
         Recursively loads a KiCad schematic and all subsheets
@@ -455,6 +485,11 @@ class MainFrame(wx.Frame):
 
         # Load Chosen Schematic
         print "opening File:", open_dialog.GetPath()
+
+        # Store the path to the file history
+        self.filehistory.AddFileToHistory(open_dialog.GetPath())
+        self.filehistory.Save(self.config)
+        self.config.Flush()
 
         self.load(open_dialog.GetPath())
 
