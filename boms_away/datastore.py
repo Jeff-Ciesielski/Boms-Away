@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -82,8 +83,18 @@ class Datastore(object):
 
         datastore_dir = os.path.join(
             os.path.expanduser("~"),
+            '.bomsaway.d',
+        )
+
+        _legacy_dir = os.path.join(
+            os.path.expanduser("~"),
             '.kicadbommgr.d',
         )
+
+        # Handle legacy file location
+        if os.path.exists(_legacy_dir):
+            print "Migrating datastore from legacy location"
+            shutil.move(_legacy_dir, datastore_dir)
 
         # Create the kicad bom manager folder if it doesn't already exist
         if not os.path.exists(datastore_dir):
