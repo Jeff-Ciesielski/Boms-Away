@@ -267,13 +267,17 @@ class UniquePartSelectorDialog(wx.Dialog):
         self.selection_text = None
 
         vbox = wx.BoxSizer(wx.VERTICAL)
-        stline = wx.StaticText(self, 11, 'Duplicate Component values found!\n\nPlease select which format to follow:')
+        stline = wx.StaticText(
+            self,
+            11,
+            'Duplicate Component values found!'
+            '\n\nPlease select which format to follow:')
         vbox.Add(stline, 0, wx.ALIGN_CENTER|wx.TOP)
         self.comp_list = wx.ListBox(self, 331, style=wx.LB_SINGLE)
 
         vbox.Add(self.comp_list, 1, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
         self.SetSizer(vbox)
-        self.comp_list.Bind(wx.EVT_LISTBOX, self.on_selection, id=wx.ID_ANY)
+        self.comp_list.Bind(wx.EVT_LISTBOX_DCLICK, self.on_selection, id=wx.ID_ANY)
 
     def on_selection(self, event):
         self.selection_text = self.comp_list.GetStringSelection()
