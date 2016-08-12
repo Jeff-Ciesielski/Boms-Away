@@ -537,7 +537,13 @@ class MainFrame(wx.Frame):
         if export_dialog.ShowModal() == wx.ID_CANCEL:
             return
 
-        with open(export_dialog.GetPath(), 'w') as csvfile:
+
+        base, ext = os.path.splitext(export_dialog.GetPath())
+
+        if not ext:
+            ext = '.csv'
+
+        with open(base+ext, 'w') as csvfile:
             wrt = csv.writer(csvfile)
 
             wrt.writerow(['Refs', 'Value', 'Footprint',
