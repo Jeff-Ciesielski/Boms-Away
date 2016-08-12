@@ -81,7 +81,16 @@ select `Save Schematic` from the menu.
 
 ## Changes
 
+### 8/12/16
+
+* Properly handle multi-unit components.  Now components with multiple
+  'units' (i.e. a quad op-amp in a single package, with 4 schematic
+  symbols) will show as a single line-item.
+* If no extension is provided on a bom export, a .csv will be
+  automatically appended to the exported file
+
 ### 8/11/16
+
 * Removed old Kivy based version
 * Moved datastore/config location to ~/.bomsaway.d (Note: Existing
   databases will be automatically migrated)
