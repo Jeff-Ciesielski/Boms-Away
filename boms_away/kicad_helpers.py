@@ -177,6 +177,10 @@ class ComponentWrapper(object):
     def supplier_url(self, url):
         self._set_field_value('SPURL', url)
 
+    @property
+    def unit(self):
+        return int(self._cmp.unit['unit'])
+
     def __str__(self):
         return '\n'.join([
             '\nComponent: {}'.format(self.reference),
@@ -201,7 +205,16 @@ class ComponentTypeContainer(object):
         self._components.append(component)
 
     def __len__(self):
-        return len(self._components)
+        return len(self._unique_components)
+
+    @property
+    def _unique_components(self):
+        """Returns a list of the unique components. This will group multi-part
+        components together (i.e. individual units, such as a 4
+        channel op-amp in a single package, will show as a single unified component)
+
+        """
+        return [x for x in self._components if x.unit == 1]
 
     @property
     def has_valid_key_fields(self):
@@ -221,7 +234,7 @@ class ComponentTypeContainer(object):
 
     @property
     def refs(self):
-        return ';'.join([x.reference for x in self._components])
+        return ';'.join([x.reference for x in self._unique_components])
 
     @property
     def value(self):
