@@ -1,4 +1,4 @@
-import sch
+from . import sch
 import os
 
 

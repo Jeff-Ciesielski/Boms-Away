@@ -1,4 +1,4 @@
-#!/usr/bin/env pythonw
+#!/usr/bin/env python3
 import os
 import csv
 import shutil
@@ -168,9 +168,9 @@ class ComponentTypeView(wx.Panel):
 
 
         for pn in up.manufacturer_pns:
-            print pn
+            print(pn)
             if not pn.supplier_parts:
-                print "no known suppliers"
+                print("no known suppliers")
                 sel_txt = '{} (No Known Suppliers)'.format(
                     pn.pn
                 )
@@ -178,7 +178,7 @@ class ComponentTypeView(wx.Panel):
 
             else:
                 for s_pn in pn.supplier_parts:
-                    print "suppliers:", s_pn.supplier.name
+                    print("suppliers:", s_pn.supplier.name)
                     sel_text = '{} {} @ {}[{}]'.format(
                         pn.manufacturer.name,
                         pn.pn,
@@ -197,13 +197,13 @@ class ComponentTypeView(wx.Panel):
 
 
         if len(selections) == 1:
-            mpn, spn = selections.values().pop()
+            mpn, spn = list(selections.values()).pop()
             _set_pn_values(mpn,spn)
         else:
             _dbps = DBPartSelectorDialog(self,
                                          wx.ID_ANY,
                                          'DB Part Selection')
-            _dbps.attach_data(selections.keys())
+            _dbps.attach_data(list(selections.keys()))
             _dbps.ShowModal()
 
             if not _dbps.selection_text:
@@ -325,7 +325,7 @@ class MainFrame(wx.Frame):
     def _load_config(self):
         # Handle legacy file location
         if os.path.exists(self._legacy_dir):
-            print "Migrating config from legacy location"
+            print("Migrating config from legacy location")
             shutil.move(self._legacy_dir, self.config_dir)
 
         # Create the kicad bom manager folder if it doesn't already exist
@@ -406,7 +406,7 @@ class MainFrame(wx.Frame):
                 else:
                     uniq[cthsh] = self.component_type_map[fp][ct]
 
-        for d, cl in dups.items():
+        for d, cl in list(dups.items()):
 
             _popup = UniquePartSelectorDialog(self,
                                               wx.ID_ANY,
@@ -432,7 +432,7 @@ class MainFrame(wx.Frame):
                 rem.supplier_pn = sel.supplier_pn
                 rem.supplier = sel.supplier
 
-                print sel
+                print(sel)
                 sel.extract_components(rem)
                 del self.component_type_map[old_fp][old_val]
 
@@ -462,7 +462,7 @@ class MainFrame(wx.Frame):
         # TODO: re-work this to return values instead of passing them byref
         kch.walk_sheets(base_dir, self.schematics[top_name].sheets, self.schematics)
 
-        for name, schematic in self.schematics.items():
+        for name, schematic in list(self.schematics.items()):
             for _cbase in schematic.components:
                 c = kch.ComponentWrapper(_cbase)
 
@@ -516,7 +516,7 @@ class MainFrame(wx.Frame):
             return
 
         # Load Chosen Schematic
-        print "opening File:", open_dialog.GetPath()
+        print("opening File:", open_dialog.GetPath())
 
         # Store the path to the file history
         self.filehistory.AddFileToHistory(open_dialog.GetPath())
@@ -575,7 +575,7 @@ class MainFrame(wx.Frame):
         Saves the schematics
         """
         self.ctv.save_component_type_changes()
-        for name, schematic in self.schematics.items():
+        for name, schematic in list(self.schematics.items()):
             schematic.save()
 
 
