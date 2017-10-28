@@ -158,7 +158,7 @@ class ComponentTypeView(wx.Panel):
             return
 
         if not up.manufacturer_pns.count():
-            dlg = wx.MessageDialog(parent,
+            dlg = wx.MessageDialog(self.parent,
                                    "No suitable parts found in Datastore",
                                    "No Results Found",
                                    wx.OK | wx.ICON_INFORMATION)
