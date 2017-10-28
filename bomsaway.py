@@ -29,7 +29,7 @@ class DBPartSelectorDialog(wx.Dialog):
         self.Close()
 
     def attach_data(self, data):
-        map(self.comp_list.Append, data)
+        list(map(self.comp_list.Append, data))
 
 
 class ComponentTypeView(wx.Panel):
@@ -227,8 +227,8 @@ class ComponentTypeView(wx.Panel):
         self.comp_list.Clear()
         self._current_type = None
 
-        map(self.comp_list.Append,
-            [x for x in sorted(set(self.type_data[self.fp_list.GetStringSelection()].keys()))])
+        list(map(self.comp_list.Append,
+                [x for x in sorted(set(self.type_data[self.fp_list.GetStringSelection()].keys()))]))
 
     def on_comp_list(self, event):
         self.save_component_type_changes()
@@ -259,8 +259,8 @@ class ComponentTypeView(wx.Panel):
 
         self._reset()
 
-        map(self.fp_list.Append,
-            [x for x in sorted(set(type_data.keys()))])
+        list(map(self.fp_list.Append,
+                [x for x in sorted(set(type_data.keys()))]))
 
 class UniquePartSelectorDialog(wx.Dialog):
     def __init__(self, parent, id, title):
@@ -287,7 +287,7 @@ class UniquePartSelectorDialog(wx.Dialog):
         self.Close()
 
     def attach_data(self, data):
-        map(self.comp_list.Append, data)
+        list(map(self.comp_list.Append, data))
 
 class MainFrame(wx.Frame):
 
