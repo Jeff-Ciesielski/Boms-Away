@@ -427,8 +427,8 @@ class MainFrame(wx.Frame):
 
                 # Set all relevant fields
                 rem.value = sel.value
-                rem.manufacturer = sel.manufacturer
                 rem.manufacturer_pn = sel.manufacturer_pn
+                rem.manufacturer = sel.manufacturer
                 rem.supplier_pn = sel.supplier_pn
                 rem.supplier = sel.supplier
 
@@ -546,21 +546,21 @@ class MainFrame(wx.Frame):
         with open(base+ext, 'w') as csvfile:
             wrt = csv.writer(csvfile)
 
-            wrt.writerow(['Refs', 'Value', 'Footprint',
-                          'QTY', 'MFR', 'MPN', 'SPR', 'SPN'])
+            wrt.writerow(['Quantity','Value', 'Refs', 'Footprint',
+                           'Manufacturer','Manufacture Part Number',
+                           'LCSC Part Number'])
 
             for fp in sorted(self.component_type_map):
                 for val in sorted(self.component_type_map[fp]):
                     ctcont = self.component_type_map[fp][val]
                     wrt.writerow([
-                        ctcont.refs,
-                        ctcont.value,
-                        ctcont.footprint,
                         len(ctcont),
+                        ctcont.value,
+                        ctcont.refs,
+                        ctcont.footprint,
                         ctcont.manufacturer,
                         ctcont.manufacturer_pn,
-                        ctcont.supplier,
-                        ctcont.supplier_pn,
+                        ctcont.supplier_pn
                     ])
 
     def on_quit(self, event):

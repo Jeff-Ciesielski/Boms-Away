@@ -81,6 +81,19 @@ select `Save Schematic` from the menu.
 
 ## Changes
 
+### 17/10/17
+
+The CSV generated has been modified to be compatibly with LCSC BOM importer.
+You have to add the follow fields to the component:
+  * SPR: Supplier name.
+  * SPN: Supplier number.
+  * MFR: Manufacturer name.
+  * MPN: Manufacturer number
+![Fieds](kicad_fields.png)
+
+If you go to [LCSC BOM TOOL](https://lcsc.com/user/bom) you can add the csv and automatically generate your order
+![order](lcsc_order.png)
+
 ### 8/12/16
 
 * Properly handle multi-unit components.  Now components with multiple
