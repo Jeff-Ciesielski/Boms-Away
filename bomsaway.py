@@ -79,7 +79,7 @@ class ComponentTypeView(wx.Panel):
         # Create Component selector box
         compbox = wx.BoxSizer(wx.VERTICAL)
 
-        comp_label = wx.StaticText(self, -1, 'Componenents', style=wx.ALIGN_CENTER_HORIZONTAL)
+        comp_label = wx.StaticText(self, -1, 'Components', style=wx.ALIGN_CENTER_HORIZONTAL)
         self.comp_list = wx.ListBox(self, 331, style=wx.LB_SINGLE)
 
         compbox.Add(comp_label,  0, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
