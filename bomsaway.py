@@ -6,7 +6,8 @@ import shutil
 import wx
 from boms_away import sch, datastore
 from boms_away import kicad_helpers as kch
-
+from boms_away import export_plugins as export_plugins
+from boms_away import plugin_loader
 
 class DBPartSelectorDialog(wx.Dialog):
     def __init__(self, parent, id, title):
@@ -530,38 +531,21 @@ class MainFrame(wx.Frame):
         Gets a file path via popup, then exports content
         """
 
-        export_dialog = wx.FileDialog(self, "Export to CSV", "", "",
-                                      "CSV Files (*.csv)|*.csv",
+        exporters = plugin_loader.load_export_plugins()
+
+        wildcards = '|'.join([x.wildcard for x in exporters])
+
+        export_dialog = wx.FileDialog(self, "Export BOM", "", "",
+                                      wildcards,
                                       wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
 
         if export_dialog.ShowModal() == wx.ID_CANCEL:
             return
 
-
         base, ext = os.path.splitext(export_dialog.GetPath())
+        filt_idx = export_dialog.GetFilterIndex()
 
-        if not ext:
-            ext = '.csv'
-
-        with open(base+ext, 'w') as csvfile:
-            wrt = csv.writer(csvfile)
-
-            wrt.writerow(['Refs', 'Value', 'Footprint',
-                          'QTY', 'MFR', 'MPN', 'SPR', 'SPN'])
-
-            for fp in sorted(self.component_type_map):
-                for val in sorted(self.component_type_map[fp]):
-                    ctcont = self.component_type_map[fp][val]
-                    wrt.writerow([
-                        ctcont.refs,
-                        ctcont.value,
-                        ctcont.footprint,
-                        len(ctcont),
-                        ctcont.manufacturer,
-                        ctcont.manufacturer_pn,
-                        ctcont.supplier,
-                        ctcont.supplier_pn,
-                    ])
+        exporters[filt_idx]().export(base, self.component_type_map)
 
     def on_quit(self, event):
         """
