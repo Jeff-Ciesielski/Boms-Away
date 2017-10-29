@@ -66,7 +66,7 @@ class ComponentWrapper(object):
             "MPN",
             "SPR",
             "SPN",
-	    "SPURL",
+            "SPURL",
         ]
 
         for f in _fields:
@@ -76,7 +76,7 @@ class ComponentWrapper(object):
 
             f_data = {
                 'name': '"{}"'.format(f),
-                'ref': '""'
+                'ref': '"-"'
             }
 
             self._cmp.addField(f_data)
