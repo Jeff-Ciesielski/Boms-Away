@@ -17,6 +17,17 @@ who choose to use Kicad for their layout and schematic capture needs,
 allowing for faster, easier data entry, and to provide a part database
 for re-use in future designs.
 
+## Installation
+
+With [pyenv](https://github.com/pyenv/pyenv) and [pipenv](https://pipenv.readthedocs.io/en/latest/) installed, cd into the cloned directory and run:
+
+```
+PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install .
+pipenv install
+```
+
+Then run the app with: `./wrapper.sh bomsaway.py`
+
 ## Requirements
 
 * python 2.7
