@@ -23,6 +23,7 @@ class DBPartSelectorDialog(wx.Dialog):
         vbox.Add(self.comp_list, 1, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
         self.SetSizer(vbox)
         self.comp_list.Bind(wx.EVT_LISTBOX, self.on_selection, id=wx.ID_ANY)
+        self.Show(True)
 
     def on_selection(self, event):
         self.selection_text = self.comp_list.GetStringSelection()
@@ -281,6 +282,7 @@ class UniquePartSelectorDialog(wx.Dialog):
         vbox.Add(self.comp_list, 1, wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
         self.SetSizer(vbox)
         self.comp_list.Bind(wx.EVT_LISTBOX_DCLICK, self.on_selection, id=wx.ID_ANY)
+        self.Show(True)
 
     def on_selection(self, event):
         self.selection_text = self.comp_list.GetStringSelection()
