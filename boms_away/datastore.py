@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 
 from sqlalchemy import Column, ForeignKey, Integer, String
@@ -7,7 +8,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
-
 
 class ComponentValue(Base):
     __tablename__ = 'component_value'
@@ -37,7 +37,6 @@ class UniquePart(Base):
     footprint = relationship('Footprint')
     manufacturer_pns = relationship('ManufacturerPart', backref='UniquePart', lazy='dynamic')
 
-
 class Manufacturer(Base):
     __tablename__ = 'manufacturer'
     id = Column(Integer, primary_key=True)
@@ -45,6 +44,10 @@ class Manufacturer(Base):
     website = Column(String(128), nullable=True)
     parts = relationship('ManufacturerPart')
 
+class Description(Base):
+    __tablename__ = 'description'
+    id = Column(Integer, primary_key=True)
+    description = Column(String(256), nullable=False)
 
 class Supplier(Base):
     __tablename__ = 'supplier'
@@ -63,6 +66,8 @@ class ManufacturerPart(Base):
     unique_part_id = Column(Integer, ForeignKey('unique_part.id'))
     unique_part = relationship('UniquePart')
     supplier_parts = relationship('SupplierPart')
+    description_id = Column(Integer, ForeignKey('description.id'))
+    description = relationship('Description')
 
 class SupplierPart(Base):
     __tablename__ = 'supplier_part'
@@ -73,7 +78,8 @@ class SupplierPart(Base):
     supplier = relationship('Supplier')
     manufacturer_part_id = Column(Integer, ForeignKey('manufacturer_part.id'))
     manufacturer_part = relationship('ManufacturerPart')
-
+    description_id = Column(Integer, ForeignKey('description.id'))
+    description = relationship('Description')
 
 class Datastore(object):
     def __init__(self, datastore_path):
@@ -125,7 +131,7 @@ class Datastore(object):
         # Check and update each field
 
         session = self._new_session()
-        
+
         val = (
             session.query(ComponentValue)
             .filter(ComponentValue.value == ct.value)
@@ -144,6 +150,11 @@ class Datastore(object):
         mfr = (
             session.query(Manufacturer)
             .filter(Manufacturer.name == ct.manufacturer)
+        ).first()
+
+        desc = (
+            session.query(Description)
+            .filter(Description.description == ct.description)
         ).first()
 
         mpn = (
@@ -177,6 +188,10 @@ class Datastore(object):
             mfr = Manufacturer(name=ct.manufacturer)
             session.add(mfr)
 
+        if not desc and len(ct.description.strip()):
+            desc = Description(description=ct.description)
+            session.add(desc)
+
         if not mpn and len(ct.manufacturer_pn.strip()):
             mpn = ManufacturerPart(pn=ct.manufacturer_pn)
             session.add(mpn)
@@ -198,6 +213,12 @@ class Datastore(object):
 
         if mpn and spn:
             spn.manufacturer_part = mpn
+
+        if desc and not spn.description:
+            spn.description = desc
+
+        if desc and not mpn.description:
+            mpn.description = desc
 
         if val and fp:
             # check to see if there is a unique part listing

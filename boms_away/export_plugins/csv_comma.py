@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv
 
 from . import _export_base
@@ -13,7 +14,8 @@ class CsvExport(_export_base.BomsAwayExporter):
             wrt = csv.writer(csvfile)
 
             wrt.writerow(['Refs', 'Value', 'Footprint',
-                          'Quantity', 'MFR', 'MPN', 'SPR', 'SPN'])
+                          'Quantity', 'DESC', 'MFR', 'MPN', 'SPR', 'SPN',
+                          'SPURL'])
 
             for fp in sorted(components):
                 for val in sorted(components[fp]):
@@ -23,8 +25,10 @@ class CsvExport(_export_base.BomsAwayExporter):
                         ctcont.value,
                         ctcont.footprint,
                         len(ctcont),
+                        ctcont.description,
                         ctcont.manufacturer,
                         ctcont.manufacturer_pn,
                         ctcont.supplier,
                         ctcont.supplier_pn,
+                        ctcont.supplier_url,
                     ])
