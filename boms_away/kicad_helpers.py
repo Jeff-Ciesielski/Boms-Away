@@ -321,6 +321,7 @@ def walk_sheets(base_dir, sheets, sch_dict):
         sch_dict[sheet_name] = (
             sch.Schematic(os.path.join(base_dir, sheet_sch))
         )
+        base_dir = os.path.join(base_dir, os.path.split(sheet_sch)[0])
 
         walk_sheets(base_dir, schematic.sheets, sch_dict)
             
