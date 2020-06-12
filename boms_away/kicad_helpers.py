@@ -1,6 +1,47 @@
+# -*- coding: utf-8 -*-
 from . import sch
-import os
+import os, re
 
+# Do not fit list
+DNF = [
+    "dnf",
+    "dnl",
+    "dnp",
+    "dns",
+    "do not fit",
+    "do not place",
+    "do not load",
+    "do not stuff",
+    "nofit",
+    "nostuff",
+    "noplace",
+    "noload",
+    "not fitted",
+    "not loaded",
+    "not placed",
+    "no stuff",
+    "no load",
+    "no place",
+]
+
+REF_EXCLUDES = [
+    '^TP[0-9]+',
+    '^FID[0-9]+',
+    '^H[0-9]+',
+]
+
+FP_EXCLUDES = [
+    'mount.*hole',
+    'test.*point',
+    'ficidial',
+]
+
+VAL_EXCLUDES = [
+    'mount.*hole',
+    'solder.*bridge',
+    'test.*point',
+    'fidicial',
+]
 
 def sanitized(f):
     """
@@ -67,6 +108,7 @@ class ComponentWrapper(object):
             "SPR",
             "SPN",
             "SPURL",
+            "DESC",
         ]
 
         for f in _fields:
@@ -96,7 +138,7 @@ class ComponentWrapper(object):
             return False
 
         return True
-        
+
     @property
     def typeid(self):
         return '{}|{}'.format(self.value,
@@ -123,6 +165,14 @@ class ComponentWrapper(object):
         return self._get_field_value('footprint')
 
     @property
+    def description(self):
+        return self._get_field_value('DESC')
+
+    @description.setter
+    def description(self, desc):
+        self._set_field_value('DESC', desc)
+
+    @property
     def datasheet(self):
         return self._get_field_value('datasheet')
 
@@ -136,6 +186,28 @@ class ComponentWrapper(object):
         if self._cmp.labels['ref'][0] == '#':
             return True
         return False
+
+    @property
+    def is_dnf(self):
+        """ Returns true if component is do-not-fill """
+        for dnf in DNF:
+            if self._get_field_value('value').lower().find(dnf) >= 0:
+                return True
+        return False
+
+    @property
+    def is_excluded(self):
+        """ Returns True if component should be excluded from BOM """
+        for e in REF_EXCLUDES:
+            if re.search(e, self._cmp.labels['ref'].upper()) != None:
+                return True;
+        for e in FP_EXCLUDES:
+            if re.search(e, self.footprint.lower()) != None:
+                return True
+        for e in VAL_EXCLUDES:
+            if re.search(e, self.value.lower()) != None:
+                return True
+        return False;
 
     @property
     def manufacturer(self):
@@ -259,6 +331,15 @@ class ComponentTypeContainer(object):
             c.datasheet = ds
 
     @property
+    def description(self):
+        return self._components[0].description
+
+    @description.setter
+    def description(self, desc):
+        for c in self._components:
+            c.description = desc
+
+    @property
     def manufacturer(self):
         return self._components[0].manufacturer
 
@@ -324,4 +405,4 @@ def walk_sheets(base_dir, sheets, sch_dict):
         base_dir = os.path.join(base_dir, os.path.split(sheet_sch)[0])
 
         walk_sheets(base_dir, schematic.sheets, sch_dict)
-            
+

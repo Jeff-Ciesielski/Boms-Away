@@ -3,9 +3,9 @@ import csv
 
 from . import _export_base
 
-class CsvExport(_export_base.BomsAwayExporter):
+class CsvPcbwayExport(_export_base.BomsAwayExporter):
     extension = 'csv'
-    wildcard = 'CSV Files (*.csv)|*.csv'
+    wildcard = 'PCBWay CSV Files (*.csv)|*.csv'
 
     def export(self, base_filename, components):
         file_path = '{}.{}'.format(base_filename, self.extension)
@@ -13,22 +13,24 @@ class CsvExport(_export_base.BomsAwayExporter):
         with open(file_path, 'w') as csvfile:
             wrt = csv.writer(csvfile)
 
-            wrt.writerow(['Refs', 'Value', 'Footprint',
-                          'Quantity', 'DESC', 'MFR', 'MPN', 'SPR', 'SPN',
-                          'SPURL'])
-
+            wrt.writerow(['Item #', 'Ref Des', 'Qty', 'Manufacturer',
+                          'Mfg Part #', 'Value', 'Description', 'Package',
+                          'Supplier', 'Sup Part #', 'Sup URL'])
+            item = 1
             for fp in sorted(components):
                 for val in sorted(components[fp]):
                     ctcont = components[fp][val]
                     wrt.writerow([
+                        item,
                         ctcont.refs,
-                        ctcont.value,
-                        ctcont.footprint,
                         len(ctcont),
-                        ctcont.description,
                         ctcont.manufacturer,
                         ctcont.manufacturer_pn,
+                        ctcont.value,
+                        ctcont.description,
+                        ctcont.footprint,
                         ctcont.supplier,
                         ctcont.supplier_pn,
                         ctcont.supplier_url,
                     ])
+                    item = item + 1

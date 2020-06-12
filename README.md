@@ -30,7 +30,7 @@ Then run the app with: `./wrapper.sh bomsaway.py`
 
 ## Requirements
 
-* python 2.7
+* python 3.6
 * sqlalchemy
 * wxPython (pip install should work on most platforms, otherwise, see [wxPython.org](http://wxpython.org/download.php)
 
@@ -79,11 +79,11 @@ All changes can be saved back to KiCad Schematics
 ### This tool is opinionated!
 
 The tool has to store its information somewhere, so it uses kicad's
-custom component fields. Currently, the fields SPN, MPN, SPR, and MFR
-are reserved for use. If these fields do not exist, they will be
-automatically added to each component as it is accessed. The tool does
-not attempt to do any import or translation of other existing fields
-(field remapping could be added in a future update).
+custom component fields. Currently, the fields SPN, MPN, SPR, MFR, SPN,
+SPURL and DESC are reserved for use. If these fields do not exist, they
+will be automatically added to each component as it is accessed.  The
+tool does not attempt to do any import or translation of other existing
+fields (field remapping could be added in a future update).
 
 ### Schematic saves are not automatic!
 
@@ -91,6 +91,12 @@ If you would like data propegated back to your kicad schematic, please
 select `Save Schematic` from the menu.
 
 ## Changes
+
+### 12/29/19
+* Allow the schematic file to be passed on the command line
+* Added description field and allow SPURL to also be edited
+* Added ability to ignore fidicials, holes, test points, etc.
+* Added ability to ignore do-not-fit (DNF) and variants in value
 
 ### 8/12/16
 
@@ -115,6 +121,7 @@ select `Save Schematic` from the menu.
 * Add Unit tests
 * User Guide
 * Clean up user screens
+* Set default save directory to schematic directory
 
 ## Planned Features
 
@@ -130,6 +137,10 @@ Enable part price lookups and stock amount checking
 ### Bom Price Breakdown View (after octopart)
 
 View overall prices / quantity ordered
+
+### Digikey integration
+
+Same as Octopart
 
 
 ## Feature wishlist

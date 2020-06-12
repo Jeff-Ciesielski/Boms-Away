@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+#-*- coding: utf-8 -*-
+
 import os
 import csv
 import shutil
-
+import sys
 import wx
 from boms_away import sch, datastore
 from boms_away import kicad_helpers as kch
@@ -43,8 +45,8 @@ class ComponentTypeView(wx.Panel):
         self._current_type = None
         self.grid = wx.GridSizer(0, 2, 3, 3)
 
-        self.lookup_button = wx.Button(self, 310, 'Part Lookup')
-        self.save_button = wx.Button(self, 311, 'Save Part to Datastore')
+        self.lookup_button = wx.Button(self, 350, 'Part Lookup')
+        self.save_button = wx.Button(self, 351, 'Save Part to Datastore')
 
         self.qty_text = wx.TextCtrl(self, 301, '', style=wx.TE_READONLY)
         self.refs_text = wx.TextCtrl(self, 302, '', style=wx.TE_READONLY)
@@ -55,6 +57,8 @@ class ComponentTypeView(wx.Panel):
         self.mpn_text = wx.TextCtrl(self, 307, '')
         self.spr_text = wx.TextCtrl(self, 308, '')
         self.spn_text = wx.TextCtrl(self, 309, '')
+        self.desc_text = wx.TextCtrl(self, 310, '')
+        self.spurl_text = wx.TextCtrl(self, 311, '')
 
         # Bind the save and lookup component buttons
         self.save_button.Bind(wx.EVT_BUTTON, self.on_save_to_datastore, id=wx.ID_ANY)
@@ -117,12 +121,16 @@ class ComponentTypeView(wx.Panel):
             (self.ds_text, 0, wx.EXPAND),
             (wx.StaticText(self, -1, 'Manufacturer'), 0, wx.EXPAND),
             (self.mfr_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Description'), 0, wx.EXPAND),
+            (self.desc_text, 0, wx.EXPAND),
             (wx.StaticText(self, -1, 'Manufacturer PN'), 0, wx.EXPAND),
             (self.mpn_text, 0, wx.EXPAND),
             (wx.StaticText(self, -1, 'Supplier'), 0, wx.EXPAND),
             (self.spr_text, 0, wx.EXPAND),
             (wx.StaticText(self, -1, 'Supplier PN'), 0, wx.EXPAND),
             (self.spn_text, 0, wx.EXPAND),
+            (wx.StaticText(self, -1, 'Supplier URL'), 0, wx.EXPAND),
+            (self.spurl_text, 0, wx.EXPAND),
             (self.lookup_button, 0, wx.EXPAND),
             (self.save_button, 0, wx.EXPAND),
         ])
@@ -138,6 +146,8 @@ class ComponentTypeView(wx.Panel):
         self._current_type.manufacturer_pn = self.mpn_text.GetValue()
         self._current_type.supplier = self.spr_text.GetValue()
         self._current_type.supplier_pn = self.spn_text.GetValue()
+        self._current_type.description = self.desc_text.GetValue()
+        self._current_type.supplier_url = self.spurl_text.GetValue()
 
     def on_lookup_component(self, event):
         ct = self._current_type
@@ -245,10 +255,11 @@ class ComponentTypeView(wx.Panel):
         self.value_text.SetValue(comp.value)
         self.ds_text.SetValue(comp.datasheet)
         self.mfr_text.SetValue(comp.manufacturer)
+        self.desc_text.SetValue(comp.description)
         self.mpn_text.SetValue(comp.manufacturer_pn)
         self.spr_text.SetValue(comp.supplier)
         self.spn_text.SetValue(comp.supplier_pn)
-
+        self.spurl_text.SetValue(comp.supplier_url)
         self._current_type = comp
 
     def _reset(self):
@@ -358,7 +369,7 @@ class MainFrame(wx.Frame):
         file.Append(wx.ID_OPEN, '&Open', 'Open a schematic')
         file.Append(wx.ID_SAVE, '&Save', 'Save the schematic')
         file.AppendSeparator()
-        file.Append(103, '&Export BOM as CSV', 'Export the BOM as CSV')
+        file.Append(103, '&Export BOM', 'Export the BOM')
         file.AppendSeparator()
 
         # Create a new submenu for recent files
@@ -370,7 +381,7 @@ class MainFrame(wx.Frame):
         file.AppendSeparator()
 
         quit = wx.MenuItem(file, 105, '&Quit\tCtrl+Q', 'Quit the Application')
-        file.AppendItem(quit)
+        file.Append(quit)
         edit.Append(201, 'Consolidate Components', 'Consolidate duplicated components')
         menubar.Append(file, '&File')
         menubar.Append(edit, '&Edit')
@@ -434,6 +445,7 @@ class MainFrame(wx.Frame):
                 rem.manufacturer_pn = sel.manufacturer_pn
                 rem.supplier_pn = sel.supplier_pn
                 rem.supplier = sel.supplier
+                rem.description = sel.description
 
                 print(sel)
                 sel.extract_components(rem)
@@ -472,6 +484,15 @@ class MainFrame(wx.Frame):
                 # Skip virtual components (power, gnd, etc)
                 if c.is_virtual:
                     continue
+
+                # Skip anything that is do-not-fit
+                if c.is_dnf:
+                    print("Excluding do-not-fit ", c.reference, " from BOM")
+                    continue;
+
+                if c.is_excluded:
+                    print("Excluding ", c.reference, " from BOM")
+                    continue;
 
                 # Skip anything that is missing either a value or a
                 # footprint
@@ -568,6 +589,22 @@ class MainFrame(wx.Frame):
 class BomsAwayApp(wx.App):
     def OnInit(self):
         frame = MainFrame(None, -1, 'Boms-Away!')
+        if (len(sys.argv) > 1):
+            infile = sys.argv[1]
+            if os.path.isfile(infile):
+                frame.filehistory.AddFileToHistory(infile)
+                frame.filehistory.Save(frame.config)
+                frame.config.Flush()
+                frame.load(infile)
+            else:
+                sys.stderr.write('Input file '+infile+' not found!\n')
+                msg = 'File not found: ' + infile
+                dlg = wx.MessageDialog(frame.parent, msg, "File not found",
+                                       wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return False
+
         frame.Show(True)
         self.SetTopWindow(frame)
         return True

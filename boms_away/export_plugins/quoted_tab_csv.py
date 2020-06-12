@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv
 
 from . import _export_base
@@ -13,7 +14,7 @@ class QuotedTabExport(_export_base.BomsAwayExporter):
             wrt = csv.writer(csvfile, dialect='excel-tab')
 
             wrt.writerow(['Refs', 'Value', 'Footprint',
-                          'Quantity', 'MFR', 'MPN', 'SPR', 'SPN'])
+                          'Quantity', 'DESC', 'MFR', 'MPN', 'SPR', 'SPN'])
 
             for fp in sorted(components):
                 for val in sorted(components[fp]):
@@ -24,6 +25,7 @@ class QuotedTabExport(_export_base.BomsAwayExporter):
                         '"{}"'.format(ctcont.value),
                         '"{}"'.format(ctcont.footprint),
                         '"{}"'.format(len(ctcont)),
+                        '"{}"'.format(ctcont.description),
                         '"{}"'.format(ctcont.manufacturer),
                         '"{}"'.format(ctcont.manufacturer_pn),
                         '"{}"'.format(ctcont.supplier),
